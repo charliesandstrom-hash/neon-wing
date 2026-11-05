@@ -321,6 +321,9 @@ const LB_URL = 'https://nfzjpcubzaneikswrcjl.supabase.co';   // t.ex. 'https://a
 const LB_KEY = 'sb_publishable_quKPe6oSHKYU431WblJnog_5ksg9cT2';   // den publika "anon" / "publishable"-nyckeln (aldrig service_role/secret)
 /* ===================================================================== */
 
+/* Versionsnummer: ÄNDRA vid varje uppdatering, så laddar alla öppna spel om sig automatiskt */
+const BUILD = '2026-11-05-auto1';
+
 (() => {
   const $ = id => document.getElementById(id);
   const cv = $('c'), cx = cv.getContext('2d');
@@ -545,7 +548,10 @@ const LB_KEY = 'sb_publishable_quKPe6oSHKYU431WblJnog_5ksg9cT2';   // den publik
       loadBoard($('bList'));
     }
   }
-  function closeModal() { modal.hidden = true; if (document.activeElement) document.activeElement.blur(); }
+  function closeModal() {
+    modal.hidden = true; if (document.activeElement) document.activeElement.blur();
+    setTimeout(() => checkUpdate(), 0);
+  }
   function setWho() {
     const w = $('who');
     w.hidden = !lbOn;
@@ -882,7 +888,27 @@ const LB_KEY = 'sb_publishable_quKPe6oSHKYU431WblJnog_5ksg9cT2';   // den publik
   ['contextmenu', 'gesturestart', 'dblclick'].forEach(ev =>
     document.addEventListener(ev, e => { if (!isUI(e.target)) e.preventDefault(); }, { passive: false }));
   document.addEventListener('touchmove', e => { if (!e.target.closest || !e.target.closest('.mcard')) e.preventDefault(); }, { passive: false });
-  document.addEventListener('visibilitychange', () => { last = performance.now(); });
+  document.addEventListener('visibilitychange', () => {
+    last = performance.now();
+    if (document.visibilityState === 'visible') checkUpdate();
+  });
+
+  /* ---------- auto-update ---------- */
+  async function checkUpdate() {
+    if (state === 'play' || !modal.hidden || location.protocol === 'file:') return;
+    try {
+      const r = await fetch(location.pathname + '?check=' + Date.now(), { cache: 'no-store' });
+      if (!r.ok) return;
+      const m = (await r.text()).match(/const BUILD = '([^']+)'/);
+      if (!m || m[1] === BUILD) return;
+      if (state === 'play' || !modal.hidden) return;
+      let tried = null;
+      try { tried = sessionStorage.getItem('nw-upd'); sessionStorage.setItem('nw-upd', m[1]); } catch (e) {}
+      if (tried === m[1]) return; // already tried this version once; never loop
+      location.replace(location.pathname + '?v=' + encodeURIComponent(m[1]));
+    } catch (e) {}
+  }
+  checkUpdate();
 
   resize();
   requestAnimationFrame(frame);
