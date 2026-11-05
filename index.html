@@ -126,6 +126,7 @@ h2{margin:0;font-family:var(--display);font-weight:400;font-size:clamp(40px,10vw
 .btn{pointer-events:auto;font:700 15px/1 var(--ui);letter-spacing:.06em;color:var(--void);background:var(--cyan);
   border:0;border-radius:10px;padding:13px 18px;cursor:pointer;box-shadow:0 0 18px rgba(33,243,255,.45)}
 .btn:hover{filter:brightness(1.1)}
+.btn:disabled{opacity:.45;cursor:default;box-shadow:none;filter:none}
 .btn.small{padding:10px 14px;font-size:13px}
 .btn.ghost{background:transparent;color:var(--cyan);border:1.5px solid var(--cyan);box-shadow:none}
 .btn.pink{background:var(--pink);color:#fff;box-shadow:0 0 18px rgba(255,43,214,.5)}
@@ -159,6 +160,32 @@ input:focus{border-color:var(--pink);box-shadow:0 0 14px rgba(255,43,214,.4)}
 .disc{margin:0;font-size:14px;line-height:1.5;color:#ffe7a3;background:rgba(255,210,59,.08);
   border:1px solid rgba(255,210,59,.45);border-radius:10px;padding:12px 14px}
 .disc strong{color:#ffd23b}
+
+.pgrid .wide{grid-column:1/-1}
+
+/* shop */
+.btnrow{display:flex;gap:10px;flex-wrap:wrap;justify-content:center}
+.shopsmall{color:var(--gold);border-color:var(--gold)}
+.shopbig{pointer-events:auto;width:100%;font:700 20px/1 var(--ui);letter-spacing:.32em;text-transform:uppercase;
+  color:#fff;background:rgba(255,210,59,.08);border:2px solid var(--gold);border-radius:12px;padding:16px 12px;cursor:pointer;
+  text-shadow:0 0 10px rgba(255,210,59,.9);box-shadow:0 0 18px rgba(255,210,59,.35),inset 0 0 18px rgba(255,210,59,.15)}
+.shopbig:hover{background:rgba(255,210,59,.16)}
+.gain{margin:0;font-weight:700;font-size:15px;letter-spacing:.08em;color:var(--gold);text-shadow:0 0 10px rgba(255,210,59,.6)}
+.shophead{display:flex;justify-content:space-between;align-items:center;gap:10px}
+.wallet{font-weight:700;font-size:18px;color:var(--gold);font-variant-numeric:tabular-nums;text-shadow:0 0 10px rgba(255,210,59,.6)}
+.shpreview{display:block;width:100%;height:150px;border-radius:12px;background:#05030c;border:1px solid rgba(33,243,255,.25)}
+.shinfo{display:flex;flex-direction:column;gap:8px}
+.shname{font-size:20px;letter-spacing:.14em;text-transform:uppercase;color:#fff}
+.shprice{font-weight:700;color:var(--gold);font-variant-numeric:tabular-nums}
+.shgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.shtile{display:flex;flex-direction:column;align-items:center;gap:2px;padding:6px 4px 8px;border-radius:10px;cursor:pointer;
+  background:#07040f;border:1.5px solid rgba(255,255,255,.12);color:var(--ink);font:700 11px/1.2 var(--ui);letter-spacing:.08em;text-transform:uppercase}
+.shtile canvas{display:block;width:100%;height:54px}
+.shtile small{font-size:11px;color:var(--dim);letter-spacing:.04em;text-transform:none;font-weight:500}
+.shtile.owned small{color:var(--cyan)}
+.shtile.equipped small{color:var(--lime)}
+.shtile.sel{border-color:var(--cyan);box-shadow:0 0 12px rgba(33,243,255,.45)}
+@media (max-width:380px){.shgrid{grid-template-columns:repeat(2,1fr)}}
 
 @media (max-width:480px){
   .score{font-size:52px;top:calc(64px + var(--top))}
@@ -201,7 +228,10 @@ input:focus{border-color:var(--pink);box-shadow:0 0 14px rgba(255,43,214,.4)}
     <div class="go">
       <p class="hint">Tryck för att flaxa</p>
       <p class="sub">Klick, tryck eller mellanslag · Rekord: <b id="best0">0</b></p>
-      <button id="lbBtn" class="btn ghost small" type="button" hidden>Leaderboard</button>
+      <div class="btnrow">
+        <button id="lbBtn" class="btn ghost small" type="button" hidden>Leaderboard</button>
+        <button id="shopBtn" class="btn ghost small shopsmall" type="button" hidden>◆ Shop</button>
+      </div>
     </div>
   </div>
 
@@ -213,6 +243,7 @@ input:focus{border-color:var(--pink);box-shadow:0 0 14px rgba(255,43,214,.4)}
         <div class="stat"><small>Rekord</small><strong id="sBest">0</strong></div>
       </div>
       <p id="rank" class="rank"></p>
+      <p id="coinGain" class="gain" hidden></p>
       <div id="overLb" class="lbwrap" hidden>
         <div class="tabs mini" role="tablist">
           <button type="button" role="tab" id="oTabLb" class="tab on" aria-selected="true">Leaderboard</button>
@@ -221,6 +252,7 @@ input:focus{border-color:var(--pink);box-shadow:0 0 14px rgba(255,43,214,.4)}
         <ol id="overList" class="board"></ol>
         <p id="lbNote" class="lbnote" hidden></p>
         <button id="join" class="btn pink small" type="button" hidden>Välj namn och kom med på listan</button>
+        <button id="shopBig" class="shopbig" type="button">◆ Shop ◆</button>
       </div>
     </div>
     <div id="again" class="go" hidden>
@@ -271,6 +303,27 @@ input:focus{border-color:var(--pink);box-shadow:0 0 14px rgba(255,43,214,.4)}
       <div class="row"><button class="link" type="button" id="recBack">Tillbaka</button></div>
     </section>
 
+    <section id="mShop" hidden>
+      <div class="shophead">
+        <h3>Shop</h3>
+        <span class="wallet" id="shCoins">◆ 0</span>
+      </div>
+      <canvas id="shPreview" class="shpreview" aria-label="Förhandsvisning av vald fågel"></canvas>
+      <div class="shinfo">
+        <div class="row"><b id="shName" class="shname"></b><span id="shPrice" class="shprice"></span></div>
+        <p id="shDesc" class="mtext"></p>
+        <p id="shMsg" class="err" hidden></p>
+        <button id="shAction" class="btn" type="button">Vald</button>
+      </div>
+      <div id="shGrid" class="shgrid"></div>
+      <p id="shNoName" class="mnote" hidden>Välj ett spelarnamn för att samla neon-coins och köpa fåglar. 1 neon-coin per rör.</p>
+      <div class="row">
+        <button class="link" type="button" id="shJoin" hidden>Välj spelarnamn</button>
+        <span></span>
+        <button class="btn small" type="button" id="shClose">Stäng</button>
+      </div>
+    </section>
+
     <section id="mBoard" hidden>
       <div class="tabs" role="tablist">
         <button type="button" role="tab" id="tabLb" class="tab on" aria-selected="true">Leaderboard</button>
@@ -302,6 +355,7 @@ input:focus{border-color:var(--pink);box-shadow:0 0 14px rgba(255,43,214,.4)}
             <div><dt>Total speltid</dt><dd id="st_time">–</dd></div>
             <div><dt>Skapad</dt><dd id="st_created" class="sm">–</dd></div>
             <div><dt>Senast spelad</dt><dd id="st_last" class="sm">–</dd></div>
+            <div class="wide"><dt>Flyger med</dt><dd id="st_skin">–</dd></div>
           </dl>
           <p class="mnote">Rundor, rör, snittpoäng och speltid räknas från 5 nov 2026.</p>
         </div>
@@ -322,7 +376,7 @@ const LB_KEY = 'sb_publishable_quKPe6oSHKYU431WblJnog_5ksg9cT2';   // den publik
 /* ===================================================================== */
 
 /* Versionsnummer: ÄNDRA vid varje uppdatering, så laddar alla öppna spel om sig automatiskt */
-const BUILD = '2026-11-05-auto1';
+const BUILD = '2026-11-05-shop1';
 
 (() => {
   const $ = id => document.getElementById(id);
@@ -332,7 +386,251 @@ const BUILD = '2026-11-05-auto1';
 
   const GRAV = 1750, FLAP = -520, R = 14, PW = 66, CAP = 22;
   const COLS = ['#ff2bd6', '#21f3ff'];
-  const KEY = 'neonwing-best', PKEY = 'neonwing-player';
+  const KEY = 'neonwing-best', PKEY = 'neonwing-player', WKEY = 'neonwing-wallet';
+  const TAU = Math.PI * 2;
+
+  /* ---------- skins (neon style: dark body, glowing outlines; same hitbox for all) ---------- */
+  function glowS(c, col, blur) { c.strokeStyle = col; c.shadowColor = col; c.shadowBlur = blur == null ? 16 : blur; }
+  function eyeS(c, x, y, r, pupil) {
+    c.shadowBlur = 8; c.shadowColor = '#fff'; c.fillStyle = '#fff';
+    c.beginPath(); c.arc(x, y, r, 0, TAU); c.fill();
+    c.shadowBlur = 0; c.fillStyle = pupil;
+    c.beginPath(); c.arc(x + r * 0.38, y, r * 0.5, 0, TAU); c.fill();
+  }
+  function haloS(c, col, rad) {
+    c.save(); c.globalCompositeOperation = 'lighter';
+    const h = c.createRadialGradient(0, 0, 2, 0, 0, rad);
+    h.addColorStop(0, col); h.addColorStop(1, 'rgba(0,0,0,0)');
+    c.fillStyle = h; c.beginPath(); c.arc(0, 0, rad, 0, TAU); c.fill(); c.restore();
+  }
+  const hslS = (h, l) => `hsl(${((h % 360) + 360) % 360},100%,${l}%)`;
+  const SKINS = [
+    { id: 'neon', name: 'Neon', price: 0, c: '#21f3ff', desc: 'Originalet. Rund kropp, rosa vinge och gul näbb.',
+      trail: () => ({ col: Math.random() < .5 ? '#21f3ff' : '#ff2bd6', kind: 'dot' }),
+      draw(c, t, wa, dead) {
+        haloS(c, 'rgba(33,243,255,.5)', 38);
+        c.lineJoin = 'round';
+        c.shadowColor = '#21f3ff'; c.shadowBlur = 18;
+        c.fillStyle = '#0a2638'; c.strokeStyle = '#21f3ff'; c.lineWidth = 2.5;
+        c.beginPath(); c.ellipse(0, 0, R + 3, R, 0, 0, TAU); c.fill(); c.stroke();
+        c.strokeStyle = '#ff2bd6'; c.shadowColor = '#ff2bd6';
+        c.beginPath(); c.moveTo(-R - 2, -3); c.lineTo(-R - 11, -8); c.moveTo(-R - 2, 3); c.lineTo(-R - 11, 7); c.stroke();
+        c.fillStyle = 'rgba(255,43,214,.3)';
+        c.beginPath(); c.moveTo(-8, 1); c.lineTo(-20, -3 - 15 * wa); c.lineTo(5, -1); c.closePath(); c.fill(); c.stroke();
+        c.fillStyle = '#ffd23b'; c.strokeStyle = '#ffd23b'; c.shadowColor = '#ffd23b'; c.lineWidth = 1.5;
+        c.beginPath(); c.moveTo(R + 1, -3); c.lineTo(R + 11, 1); c.lineTo(R + 1, 5); c.closePath(); c.fill();
+        eyeS(c, 6, -5, 4.2, dead ? '#ff2bd6' : '#07040f');
+      } },
+    { id: 'lava', name: 'Lava', price: 100, c: '#ff7a1a', desc: 'Fenixfågel med flamvinge och lång flamstjärt. Gnistor faller efter den.',
+      trail: () => ({ col: Math.random() < .5 ? '#ff7a1a' : '#ffd23b', kind: 'spark' }),
+      draw(c, t, wa, dead) {
+        haloS(c, 'rgba(255,110,30,.45)', 40);
+        c.lineJoin = 'round'; c.lineCap = 'round';
+        glowS(c, '#ff3b1a', 14); c.lineWidth = 2;
+        for (let i = -1; i <= 1; i++) {
+          const w = Math.sin(t * 9 + i * 1.7) * 4;
+          c.beginPath(); c.moveTo(-R - 6, i * 3);
+          c.quadraticCurveTo(-R - 16, i * 6 + w, -R - 28 + Math.abs(i) * 5, i * 9 + w * 1.4); c.stroke();
+        }
+        glowS(c, '#ff7a1a', 18); c.fillStyle = '#2a0904'; c.lineWidth = 2.5;
+        c.beginPath(); c.moveTo(R + 3, 0);
+        c.quadraticCurveTo(R, -R, -3, -R + 1); c.quadraticCurveTo(-R - 4, -7, -R - 9, 0);
+        c.quadraticCurveTo(-R - 4, 7, -3, R - 1); c.quadraticCurveTo(R, R, R + 3, 0);
+        c.closePath(); c.fill(); c.stroke();
+        const f = Math.sin(t * 11) * 2;
+        c.beginPath(); c.moveTo(-2, -R + 1); c.quadraticCurveTo(-6, -R - 8 + f, 0, -R - 12 + f);
+        c.quadraticCurveTo(2, -R - 5, 6, -R + 1); c.stroke();
+        glowS(c, '#ff2d2d', 16); c.fillStyle = 'rgba(255,45,45,.22)'; c.lineWidth = 2;
+        c.beginPath(); c.moveTo(-8, 1);
+        c.quadraticCurveTo(-18, -6 - 10 * wa, -22, -6 - 18 * wa);
+        c.quadraticCurveTo(-12, -6 - 8 * wa, -10, -4 - 12 * wa);
+        c.quadraticCurveTo(-4, -4 - 4 * wa, 5, -1);
+        c.closePath(); c.fill(); c.stroke();
+        glowS(c, '#ffb03b', 14); c.lineWidth = 1.8; c.fillStyle = '#2a0904';
+        c.beginPath(); c.moveTo(R + 1, -3); c.lineTo(R + 12, 1); c.lineTo(R + 1, 4); c.closePath(); c.fill(); c.stroke();
+        eyeS(c, 6, -4, 3.8, '#ff5a1a');
+      } },
+    { id: 'frost', name: 'Frost', price: 150, c: '#8fe9ff', desc: 'Kristallfågel av kantiga isbitar med spetsiga vingar och glödande snöflingor.',
+      trail: () => ({ col: Math.random() < .6 ? '#bff4ff' : '#ffffff', kind: 'flake' }),
+      draw(c, t, wa, dead) {
+        haloS(c, 'rgba(143,233,255,.42)', 38);
+        c.lineJoin = 'miter';
+        const P = [[R + 4, 0], [6, -R], [-8, -R + 2], [-R - 4, -4], [-R - 4, 4], [-8, R - 2], [6, R]];
+        glowS(c, '#8fe9ff', 18); c.fillStyle = '#061c2a'; c.lineWidth = 2.3;
+        c.beginPath(); P.forEach(([x, y], i) => i ? c.lineTo(x, y) : c.moveTo(x, y)); c.closePath(); c.fill(); c.stroke();
+        c.globalAlpha = .45; c.lineWidth = 1; c.shadowBlur = 6;
+        c.beginPath(); [P[1], P[3], P[5], P[0]].forEach(([x, y]) => { c.moveTo(-2, 0); c.lineTo(x, y); }); c.stroke();
+        c.globalAlpha = 1; c.lineWidth = 2;
+        c.beginPath(); c.moveTo(-R - 4, -3); c.lineTo(-R - 15, -9); c.lineTo(-R - 9, -1);
+        c.moveTo(-R - 4, 3); c.lineTo(-R - 15, 9); c.lineTo(-R - 9, 1); c.stroke();
+        glowS(c, '#ffffff', 14); c.fillStyle = 'rgba(200,245,255,.2)'; c.lineWidth = 1.8;
+        c.beginPath(); c.moveTo(-6, -1); c.lineTo(-20, -6 - 16 * wa); c.lineTo(-11, -3 - 6 * wa); c.lineTo(4, -2); c.closePath(); c.fill(); c.stroke();
+        c.beginPath(); c.moveTo(R + 3, -2); c.lineTo(R + 12, 0); c.lineTo(R + 3, 2); c.stroke();
+        eyeS(c, 5, -5, 3.8, '#0a6c9a');
+      } },
+    { id: 'toxic', name: 'Toxic', price: 200, c: '#7dff3a', desc: 'Slemmig blobb som gungar och droppar, med ett stort öga och bubblor som stiger.',
+      trail: () => ({ col: Math.random() < .6 ? '#7dff3a' : '#e8ff3a', kind: 'bubble' }),
+      draw(c, t, wa, dead) {
+        haloS(c, 'rgba(125,255,58,.38)', 38);
+        glowS(c, '#7dff3a', 18); c.fillStyle = '#0b2408'; c.lineWidth = 2.5; c.lineJoin = 'round';
+        c.beginPath();
+        for (let i = 0; i <= 36; i++) {
+          const a = i / 36 * TAU;
+          let r = R + 1 + Math.sin(a * 3 + t * 5) * 1.4;
+          if (a > Math.PI * .25 && a < Math.PI * .75) r += 2.5;
+          const x = Math.cos(a) * r * 1.12, y = Math.sin(a) * r;
+          i ? c.lineTo(x, y) : c.moveTo(x, y);
+        }
+        c.closePath(); c.fill(); c.stroke();
+        c.lineWidth = 1.8;
+        const d1 = (t * 1.2) % 1, d2 = (t * 1.2 + .5) % 1;
+        [[-5, d1], [4, d2]].forEach(([x, k]) => { c.globalAlpha = 1 - k; c.beginPath(); c.ellipse(x, R + 3 + k * 9, 1.8, 2.6, 0, 0, TAU); c.stroke(); });
+        c.globalAlpha = 1;
+        glowS(c, '#e8ff3a', 14); c.fillStyle = 'rgba(232,255,58,.18)'; c.lineWidth = 2;
+        c.save(); c.translate(-7, -3); c.rotate(-0.5 - wa * 0.6);
+        c.beginPath(); c.ellipse(-6, 0, 8, 4.5, 0, 0, TAU); c.fill(); c.stroke(); c.restore();
+        glowS(c, '#7dff3a', 10); c.lineWidth = 1.6;
+        c.beginPath(); c.arc(11, 4, 3.5, 0.1 * Math.PI, 0.8 * Math.PI); c.stroke();
+        eyeS(c, 5, -5, 5.2, '#2f8f12'); eyeS(c, 13, -6, 2.6, '#2f8f12');
+      } },
+    { id: 'ghost', name: 'Ghost', price: 300, c: '#c46bff', desc: 'Spöke med vågig nederkant och tomma lysande ögon. Flimrar och lämnar ett dimspår.',
+      trail: () => ({ col: Math.random() < .7 ? '#c46bff' : '#f0d9ff', kind: 'wisp' }),
+      draw(c, t, wa, dead) {
+        c.globalAlpha = 0.78 + 0.22 * Math.sin(t * 7) * Math.sin(t * 2.3);
+        haloS(c, 'rgba(196,107,255,.42)', 40);
+        glowS(c, '#c46bff', 20); c.fillStyle = 'rgba(30,8,48,.88)'; c.lineWidth = 2.4; c.lineJoin = 'round';
+        c.beginPath(); c.moveTo(-R - 3, 2); c.arc(0, 2, R + 3, Math.PI, 0);
+        for (let x = R + 3; x >= -R - 3; x -= 2) c.lineTo(x, R - 1 + Math.sin(x * 0.55 + t * 9) * 3);
+        c.closePath(); c.fill(); c.stroke();
+        c.lineWidth = 2;
+        c.beginPath(); c.moveTo(-6, 2); c.quadraticCurveTo(-14, -2 - 8 * wa, -20, 2 - 10 * wa); c.stroke();
+        glowS(c, '#ffffff', 12); c.fillStyle = '#05010a'; c.lineWidth = 1.8;
+        c.beginPath(); c.ellipse(3, -3, 3, 4.5, 0, 0, TAU); c.fill(); c.stroke();
+        c.beginPath(); c.ellipse(11, -3, 3, 4.5, 0, 0, TAU); c.fill(); c.stroke();
+        c.globalAlpha = 1;
+      } },
+    { id: 'gold', name: 'Gold', price: 500, c: '#ffd23b', desc: 'Kunglig fågel med krona och lång elegant stjärt. Stjärnor blinkar runt den.',
+      trail: () => ({ col: Math.random() < .6 ? '#ffd23b' : '#fff3c4', kind: 'star' }),
+      draw(c, t, wa, dead) {
+        haloS(c, 'rgba(255,210,59,.42)', 40);
+        c.lineJoin = 'round'; c.lineCap = 'round';
+        glowS(c, '#ffd23b', 14); c.lineWidth = 2;
+        const sw = Math.sin(t * 3) * 3;
+        c.beginPath(); c.moveTo(-R - 1, -2);
+        c.bezierCurveTo(-R - 14, -6 + sw, -R - 22, -14 + sw, -R - 30, -8 + sw);
+        c.arc(-R - 27, -5 + sw, 3.5, Math.PI * 1.2, Math.PI * 0.4, true); c.stroke();
+        c.beginPath(); c.moveTo(-R - 1, 3);
+        c.bezierCurveTo(-R - 14, 6 - sw, -R - 22, 14 - sw, -R - 30, 9 - sw);
+        c.arc(-R - 27, 6 - sw, 3.5, Math.PI * 0.8, Math.PI * 1.6); c.stroke();
+        glowS(c, '#ffd23b', 18); c.fillStyle = '#271d03'; c.lineWidth = 2.5;
+        c.beginPath(); c.ellipse(0, 0, R + 3, R, 0, 0, TAU); c.fill(); c.stroke();
+        c.lineWidth = 1.8; c.fillStyle = 'rgba(255,210,59,.2)';
+        c.beginPath(); c.moveTo(-5, -R + 1); c.lineTo(-6, -R - 8); c.lineTo(-2, -R - 4); c.lineTo(1, -R - 10);
+        c.lineTo(4, -R - 4); c.lineTo(8, -R - 8); c.lineTo(7, -R + 1); c.closePath(); c.fill(); c.stroke();
+        glowS(c, '#fff3c4', 14); c.fillStyle = 'rgba(255,243,196,.18)'; c.lineWidth = 1.8;
+        c.beginPath(); c.moveTo(-8, 1);
+        c.quadraticCurveTo(-16, -6 - 8 * wa, -22, -4 - 16 * wa); c.quadraticCurveTo(-10, -3 - 6 * wa, 5, -1);
+        c.closePath(); c.fill(); c.stroke();
+        c.beginPath(); c.moveTo(-14, -4 - 10 * wa); c.lineTo(-6, -1); c.stroke();
+        c.fillStyle = '#271d03'; glowS(c, '#fff3c4', 12);
+        c.beginPath(); c.moveTo(R + 1, -3); c.lineTo(R + 10, 1); c.lineTo(R + 1, 4); c.closePath(); c.fill(); c.stroke();
+        eyeS(c, 6, -4, 4, '#3a2a00');
+      } },
+    { id: 'robot', name: 'Robot', price: 750, c: '#9fd8ff', desc: 'Fyrkantig robotfågel med antenn, rött LED-visir och mekanisk vinge. Blixtar i spåret.',
+      trail: () => ({ col: Math.random() < .6 ? '#9fd8ff' : '#ffffff', kind: 'zap' }),
+      draw(c, t, wa, dead) {
+        haloS(c, 'rgba(159,216,255,.38)', 38);
+        c.lineJoin = 'miter'; c.lineCap = 'square';
+        glowS(c, '#9fd8ff', 12); c.lineWidth = 1.8;
+        c.beginPath(); c.moveTo(-1, -R); c.lineTo(-1, -R - 9); c.stroke();
+        c.globalAlpha = Math.sin(t * 6) > 0 ? 1 : .25; glowS(c, '#ff2b3a', 16); c.fillStyle = '#ff2b3a';
+        c.beginPath(); c.arc(-1, -R - 11, 2.4, 0, TAU); c.fill(); c.globalAlpha = 1;
+        glowS(c, '#9fd8ff', 18); c.fillStyle = '#0a1626'; c.lineWidth = 2.4;
+        c.beginPath();
+        if (c.roundRect) c.roundRect(-R - 3, -R, 2 * R + 7, 2 * R, 4); else c.rect(-R - 3, -R, 2 * R + 7, 2 * R);
+        c.fill(); c.stroke();
+        c.lineWidth = 1; c.globalAlpha = .5; c.shadowBlur = 4;
+        c.beginPath(); c.moveTo(-R + 2, 4); c.lineTo(R - 2, 4); c.stroke();
+        c.globalAlpha = 1; c.fillStyle = '#9fd8ff'; c.shadowBlur = 6;
+        [[-R + 1, -R + 3], [-R + 1, R - 3], [R + 1, R - 3]].forEach(([x, y]) => { c.beginPath(); c.arc(x, y, 1.2, 0, TAU); c.fill(); });
+        c.lineWidth = 2;
+        c.beginPath(); c.moveTo(-R - 3, -5); c.lineTo(-R - 10, -5); c.moveTo(-R - 3, 5); c.lineTo(-R - 10, 5); c.stroke();
+        c.save(); c.translate(-4, -2); c.rotate(-0.25 - wa * 0.55);
+        glowS(c, '#ffffff', 12); c.fillStyle = 'rgba(159,216,255,.15)'; c.lineWidth = 1.6;
+        c.beginPath(); c.rect(-12, -4, 12, 6); c.fill(); c.stroke();
+        c.beginPath(); c.rect(-21, -3, 9, 4); c.fill(); c.stroke();
+        c.restore();
+        glowS(c, '#9fd8ff', 12); c.fillStyle = '#0a1626'; c.lineWidth = 1.8;
+        c.beginPath(); c.rect(R + 4, -2, 7, 6); c.fill(); c.stroke();
+        glowS(c, '#ff2b3a', 18); c.fillStyle = '#ff2b3a'; c.fillRect(2, -8, 11, 4);
+        c.shadowBlur = 0; c.fillStyle = '#ffd0d4'; c.fillRect(8 + Math.sin(t * 2) * 2.5, -7.5, 2, 3);
+      } },
+    { id: 'rainbow', name: 'Rainbow', price: 1000, c: '#ff5cf0', desc: 'Stjärnfågel som roterar sakta medan konturen skiftar genom alla neonfärger.',
+      trail: t => ({ col: hslS(t * 140 + Math.random() * 60, 62), kind: 'dot' }),
+      draw(c, t, wa, dead) {
+        const hue = t * 140;
+        haloS(c, `hsla(${hue % 360},100%,60%,.42)`, 40);
+        c.save(); c.rotate(t * 0.9); c.lineJoin = 'round';
+        glowS(c, hslS(hue, 62), 20); c.fillStyle = '#120a1e'; c.lineWidth = 2.5;
+        c.beginPath();
+        for (let i = 0; i < 10; i++) {
+          const r = i % 2 ? (R + 4) * 0.55 : R + 5, a = -Math.PI / 2 + i * Math.PI / 5;
+          i ? c.lineTo(Math.cos(a) * r, Math.sin(a) * r) : c.moveTo(Math.cos(a) * r, Math.sin(a) * r);
+        }
+        c.closePath(); c.fill(); c.stroke();
+        c.globalAlpha = .5; c.lineWidth = 1; glowS(c, hslS(hue + 120, 70), 8);
+        c.beginPath();
+        for (let i = 0; i < 10; i++) {
+          const r = i % 2 ? 4 : 9, a = -Math.PI / 2 + i * Math.PI / 5;
+          i ? c.lineTo(Math.cos(a) * r, Math.sin(a) * r) : c.moveTo(Math.cos(a) * r, Math.sin(a) * r);
+        }
+        c.closePath(); c.stroke(); c.globalAlpha = 1;
+        c.restore();
+        glowS(c, hslS(hue + 180, 62), 14); c.lineWidth = 2;
+        c.beginPath(); c.moveTo(-10, -2); c.quadraticCurveTo(-18, -8 - 8 * wa, -24, -4 - 10 * wa); c.stroke();
+        eyeS(c, 3, -2, 3, '#120a1e'); eyeS(c, 10, -2, 3, '#120a1e');
+      } }
+  ];
+  const skinById = id => SKINS.find(s => s.id === id) || SKINS[0];
+
+  // particle factory for a skin's trail (no gravity except the classic dot/spark)
+  function trailPart(sk, x, y, vxBase, tt) {
+    const p = sk.trail(tt);
+    const q = { x, y: y + (Math.random() - .5) * 6, vx: vxBase, vy: (Math.random() - .5) * 20, life: .4, max: .4,
+      col: p.col, s: 2.2, kind: p.kind, rot: Math.random() * 6 };
+    switch (p.kind) {
+      case 'spark': q.vy = 30 + Math.random() * 50; q.s = 1.6; q.life = q.max = .5; break;
+      case 'flake': q.vy = 10 + Math.random() * 14; q.s = 3.2; q.life = q.max = .8; q.g = 0; break;
+      case 'bubble': q.vy = -25 - Math.random() * 20; q.s = 2 + Math.random() * 2.5; q.life = q.max = .7; q.g = 0; break;
+      case 'wisp': q.vy = -10; q.s = 5 + Math.random() * 4; q.life = q.max = .6; q.g = 0; break;
+      case 'star': q.vy = (Math.random() - .5) * 30; q.s = 3 + Math.random() * 2; q.life = q.max = .6; q.g = 0; break;
+      case 'zap': q.vy = 0; q.s = 6 + Math.random() * 4; q.life = q.max = .2; q.g = 0; break;
+    }
+    return q;
+  }
+  function drawPart(c, q) {
+    const a = Math.max(0, q.life / q.max);
+    c.globalAlpha = a; c.fillStyle = q.col; c.strokeStyle = q.col;
+    switch (q.kind) {
+      case 'flake':
+        c.lineWidth = 1.2; c.save(); c.translate(q.x, q.y); c.rotate(q.rot);
+        c.beginPath(); for (let i = 0; i < 3; i++) { const an = i * Math.PI / 3; c.moveTo(-Math.cos(an) * q.s, -Math.sin(an) * q.s); c.lineTo(Math.cos(an) * q.s, Math.sin(an) * q.s); } c.stroke(); c.restore(); break;
+      case 'bubble':
+        c.lineWidth = 1.2; c.beginPath(); c.arc(q.x, q.y, q.s, 0, TAU); c.stroke(); break;
+      case 'wisp':
+        c.globalAlpha = a * .35; c.beginPath(); c.arc(q.x, q.y, q.s * (1.4 - a * .4), 0, TAU); c.fill(); break;
+      case 'star':
+        c.save(); c.translate(q.x, q.y); c.globalAlpha = a * (0.5 + 0.5 * Math.abs(Math.sin(q.rot + a * 12)));
+        c.beginPath(); c.moveTo(0, -q.s); c.lineTo(q.s * .3, -q.s * .3); c.lineTo(q.s, 0); c.lineTo(q.s * .3, q.s * .3);
+        c.lineTo(0, q.s); c.lineTo(-q.s * .3, q.s * .3); c.lineTo(-q.s, 0); c.lineTo(-q.s * .3, -q.s * .3); c.closePath(); c.fill(); c.restore(); break;
+      case 'zap':
+        c.lineWidth = 1.2; c.beginPath(); c.moveTo(q.x, q.y);
+        for (let i = 1; i <= 4; i++) c.lineTo(q.x - i * q.s * .5, q.y + (i % 2 ? 1 : -1) * (2 + Math.random() * 3));
+        c.stroke(); break;
+      default:
+        c.beginPath(); c.arc(q.x, q.y, q.s, 0, TAU); c.fill();
+    }
+  }
 
   let W = 400, VH = 640, G = 570, scale = 1, dpr = 1, BX = 110;
   let stars = [], city = [], cityW = 1;
@@ -393,6 +691,21 @@ const BUILD = '2026-11-05-auto1';
   try { player = JSON.parse(localStorage.getItem(PKEY)) || null; } catch (e) {}
   function savePlayer() { try { localStorage.setItem(PKEY, JSON.stringify(player)); } catch (e) {} }
 
+  /* wallet: coins + owned skins live on the server; this is a cached copy */
+  let wallet = { coins: 0, skins: ['neon'], skin: 'neon' };
+  try { const w = JSON.parse(localStorage.getItem(WKEY)); if (w && Array.isArray(w.skins)) wallet = w; } catch (e) {}
+  function saveWallet() { try { localStorage.setItem(WKEY, JSON.stringify(wallet)); } catch (e) {} }
+  function setWallet(w) {
+    if (!w || w.coins == null) return;
+    wallet = { coins: w.coins | 0, skins: Array.isArray(w.skins) && w.skins.length ? w.skins : ['neon'], skin: w.skin || 'neon' };
+    saveWallet();
+  }
+  const curSkin = () => skinById(player && wallet.skins.includes(wallet.skin) ? wallet.skin : 'neon');
+  async function syncWallet() {
+    if (!player) return;
+    try { const w = await rpc('nw_wallet', { p_id: player.id, p_secret: player.secret }); if (w && !w.error) setWallet(w); } catch (e) {}
+  }
+
   async function rpc(fn, body) {
     const ctrl = new AbortController(); const timer = setTimeout(() => ctrl.abort(), 10000);
     try {
@@ -442,6 +755,7 @@ const BUILD = '2026-11-05-auto1';
     $('overLb').hidden = false;
     $('join').hidden = !!player;
     note('');
+    $('coinGain').hidden = true;
     const ol = $('overList');
     ol.replaceChildren(li('msg', 'Laddar topplistan…'));
     if (player) {
@@ -450,7 +764,14 @@ const BUILD = '2026-11-05-auto1';
         const res = await rpc('nw_round', { p_id: player.id, p_secret: player.secret, p_score: s, p_ms: ms });
         if (res && res.error === 'auth') note('Ditt namn kunde inte verifieras. Återställ det med din kod.');
         else if (res && res.error) { if (isPB) note('Resultatet kunde inte sparas den här gången.'); }
-        else if (res) { player.best = res.best; savePlayer(); }
+        else if (res) {
+          player.best = res.best; savePlayer();
+          if (res.coins != null) {
+            wallet.coins = res.coins; saveWallet();
+            $('coinGain').textContent = `+${res.gained || 0} neon-coins · ◆ ${wallet.coins.toLocaleString('sv-SE')}`;
+            $('coinGain').hidden = false;
+          }
+        }
       } catch (e) { if (isPB) note('Kunde inte spara resultatet. Kontrollera internet.'); }
     } else if (s > 0) {
       note('Välj ett namn för att dina resultat ska hamna på listan.');
@@ -460,7 +781,7 @@ const BUILD = '2026-11-05-auto1';
 
   /* modal */
   const modal = $('modal');
-  const secs = ['mCreate', 'mCode', 'mRecover', 'mBoard'];
+  const secs = ['mCreate', 'mCode', 'mRecover', 'mBoard', 'mShop'];
   /* player stats */
   function setTab(t) {
     const lb = t === 'lb';
@@ -511,6 +832,8 @@ const BUILD = '2026-11-05-auto1';
       $('st_time').textContent = fmtTime(Number(s.total_ms));
       $('st_created').textContent = fmtDate(s.created_at, false);
       $('st_last').textContent = fmtDate(s.last_played, true);
+      const sk = skinById(s.skin || 'neon');
+      $('st_skin').textContent = sk.name; $('st_skin').style.color = sk.c;
     } catch (e) { if (seq === statSeq) STAT_IDS.forEach(id => $(id).textContent = '–'); }
   }
   $('tabLb').addEventListener('click', () => { setTab('lb'); loadBoard($('bList')); });
@@ -571,6 +894,7 @@ const BUILD = '2026-11-05-auto1';
       else if (res.error) err(eEl, 'Namnet måste vara 3–16 tecken: bokstäver, siffror, _ eller -.');
       else {
         player = { id: res.id, name: res.name, secret: res.secret, code: res.code, best: 0 };
+        setWallet({ coins: 0, skins: ['neon'], skin: 'neon' });
         savePlayer(); setWho();
         $('cName').textContent = res.name; $('cCode').textContent = res.code;
         $('join').hidden = true;
@@ -593,6 +917,7 @@ const BUILD = '2026-11-05-auto1';
       if (res.error) err(eEl, 'Namnet och koden stämmer inte. Kontrollera och försök igen.');
       else {
         player = { id: res.id, name: res.name, secret: res.secret, code, best: res.best };
+        setWallet({ coins: 0, skins: ['neon'], skin: 'neon' }); syncWallet();
         savePlayer(); setWho();
         if (res.best > best) { best = res.best; try { localStorage.setItem(KEY, best); } catch (x) {} $('best0').textContent = best; }
         $('join').hidden = true;
@@ -626,7 +951,8 @@ const BUILD = '2026-11-05-auto1';
   modal.addEventListener('pointerdown', e => { if (e.target === modal && $('mCode').hidden) closeModal(); });
 
   if (lbOn) {
-    $('lbBtn').hidden = false; setWho();
+    $('lbBtn').hidden = false; $('shopBtn').hidden = false; setWho();
+    syncWallet();
     if (player) {
       rpc('nw_me', { p_id: player.id }).then(me => {
         if (me && me.best > best) { best = me.best; try { localStorage.setItem(KEY, best); } catch (e) {} $('best0').textContent = best; }
@@ -747,10 +1073,12 @@ const BUILD = '2026-11-05-auto1';
     groundOff += speed * dt;
 
     if (state !== 'dead' && Math.random() < (reduce ? 0.3 : 1)) {
-      parts.push({ x: BX - 12, y: bird.y + (Math.random() - 0.5) * 6, vx: -speed * 0.9 - 40, vy: (Math.random() - 0.5) * 20,
-        life: 0.4, max: 0.4, col: Math.random() < 0.5 ? '#21f3ff' : '#ff2bd6', s: 2.2 });
+      parts.push(trailPart(curSkin(), BX - 12, bird.y, -speed * 0.9 - 40, t));
     }
-    for (const q of parts) { q.x += q.vx * dt; q.y += q.vy * dt; q.vy += 300 * dt; q.life -= dt; }
+    for (const q of parts) {
+      q.x += q.vx * dt; q.y += q.vy * dt; if (q.g !== 0) q.vy += 300 * dt; q.life -= dt;
+      if (q.rot != null) q.rot += dt * 2;
+    }
     parts = parts.filter(q => q.life > 0);
   }
 
@@ -822,35 +1150,114 @@ const BUILD = '2026-11-05-auto1';
   }
   function drawParts() {
     cx.save(); cx.globalCompositeOperation = 'lighter';
-    for (const q of parts) {
-      cx.globalAlpha = Math.max(0, q.life / q.max); cx.fillStyle = q.col;
-      cx.beginPath(); cx.arc(q.x, q.y, q.s, 0, 6.283); cx.fill();
-    }
+    for (const q of parts) drawPart(cx, q);
     cx.restore();
   }
   function drawBird() {
     cx.save(); cx.translate(BX, bird.y); cx.rotate(bird.rot);
-    cx.globalCompositeOperation = 'lighter';
-    const h = cx.createRadialGradient(0, 0, 2, 0, 0, 38);
-    h.addColorStop(0, 'rgba(33,243,255,.5)'); h.addColorStop(1, 'rgba(33,243,255,0)');
-    cx.fillStyle = h; cx.beginPath(); cx.arc(0, 0, 38, 0, 6.283); cx.fill();
-    cx.globalCompositeOperation = 'source-over';
-    cx.lineJoin = 'round';
-    cx.shadowColor = '#21f3ff'; cx.shadowBlur = 18;
-    cx.fillStyle = '#0a2638'; cx.strokeStyle = '#21f3ff'; cx.lineWidth = 2.5;
-    cx.beginPath(); cx.ellipse(0, 0, R + 3, R, 0, 0, 6.283); cx.fill(); cx.stroke();
-    cx.strokeStyle = '#ff2bd6'; cx.shadowColor = '#ff2bd6';
-    cx.beginPath(); cx.moveTo(-R - 2, -3); cx.lineTo(-R - 11, -8); cx.moveTo(-R - 2, 3); cx.lineTo(-R - 11, 7); cx.stroke();
-    const wa = Math.sin(bird.wing);
-    cx.fillStyle = 'rgba(255,43,214,.3)';
-    cx.beginPath(); cx.moveTo(-8, 1); cx.lineTo(-20, -3 - 15 * wa); cx.lineTo(5, -1); cx.closePath(); cx.fill(); cx.stroke();
-    cx.fillStyle = '#ffd23b'; cx.strokeStyle = '#ffd23b'; cx.shadowColor = '#ffd23b'; cx.lineWidth = 1.5;
-    cx.beginPath(); cx.moveTo(R + 1, -3); cx.lineTo(R + 11, 1); cx.lineTo(R + 1, 5); cx.closePath(); cx.fill();
-    cx.shadowBlur = 8; cx.shadowColor = '#fff'; cx.fillStyle = '#fff';
-    cx.beginPath(); cx.arc(6, -5, 4.2, 0, 6.283); cx.fill();
-    cx.shadowBlur = 0; cx.fillStyle = state === 'dead' ? '#ff2bd6' : '#07040f';
-    cx.beginPath(); cx.arc(7.6, -5, 2.1, 0, 6.283); cx.fill();
+    curSkin().draw(cx, t, Math.sin(bird.wing), state === 'dead');
     cx.restore();
+  }
+
+  /* ---------- shop ---------- */
+  let shopSel = 'neon';
+  const shopTiles = [];
+  const shPrev = $('shPreview'), shPrevCtx = shPrev.getContext('2d');
+  let shopParts = [];
+  SKINS.forEach(sk => {
+    const b = document.createElement('button'); b.type = 'button'; b.className = 'shtile'; b.dataset.id = sk.id;
+    const cnv = document.createElement('canvas');
+    const nm = document.createElement('span'); nm.textContent = sk.name;
+    const st = document.createElement('small');
+    b.append(cnv, nm, st); $('shGrid').append(b);
+    b.addEventListener('click', () => { shopSel = sk.id; $('shMsg').hidden = true; renderShop(); });
+    shopTiles.push({ sk, b, cnv, ctx: cnv.getContext('2d'), st });
+  });
+  function sizeShop() {
+    const d = Math.min(window.devicePixelRatio || 1, 2);
+    [shPrev, ...shopTiles.map(x => x.cnv)].forEach(cnv => {
+      const r = cnv.getBoundingClientRect();
+      cnv.width = Math.round(r.width * d); cnv.height = Math.round(r.height * d);
+      cnv.getContext('2d').setTransform(d, 0, 0, d, 0, 0);
+    });
+  }
+  function renderShop() {
+    $('shCoins').textContent = '◆ ' + (player ? wallet.coins.toLocaleString('sv-SE') : 0);
+    $('shNoName').hidden = !!player; $('shJoin').hidden = !!player;
+    const eq = curSkin().id;
+    for (const tl of shopTiles) {
+      const owned = tl.sk.price === 0 || (player && wallet.skins.includes(tl.sk.id));
+      tl.b.classList.toggle('sel', tl.sk.id === shopSel);
+      tl.b.classList.toggle('owned', owned && tl.sk.id !== eq);
+      tl.b.classList.toggle('equipped', tl.sk.id === eq);
+      tl.st.textContent = tl.sk.id === eq ? 'Vald' : owned ? 'Ägd' : '◆ ' + tl.sk.price.toLocaleString('sv-SE');
+    }
+    const sk = skinById(shopSel);
+    const owned = sk.price === 0 || (player && wallet.skins.includes(sk.id));
+    $('shName').textContent = sk.name; $('shName').style.color = sk.c;
+    $('shPrice').textContent = sk.price ? '◆ ' + sk.price.toLocaleString('sv-SE') : 'Gratis';
+    $('shDesc').textContent = sk.desc;
+    const btn = $('shAction');
+    if (sk.id === eq) { btn.textContent = 'Vald'; btn.disabled = true; }
+    else if (owned) { btn.textContent = 'Välj ' + sk.name; btn.disabled = false; }
+    else if (!player) { btn.textContent = 'Välj ett spelarnamn först'; btn.disabled = true; }
+    else if (wallet.coins < sk.price) { btn.textContent = `Saknar ◆ ${(sk.price - wallet.coins).toLocaleString('sv-SE')}`; btn.disabled = true; }
+    else { btn.textContent = `Köp för ◆ ${sk.price.toLocaleString('sv-SE')}`; btn.disabled = false; }
+  }
+  async function openShop() {
+    shopSel = curSkin().id; shopParts = [];
+    openModal('mShop');
+    requestAnimationFrame(() => { sizeShop(); renderShop(); });
+    renderShop();
+    if (player) { await syncWallet(); renderShop(); }
+  }
+  $('shAction').addEventListener('click', async () => {
+    const sk = skinById(shopSel), btn = $('shAction'), msg = $('shMsg');
+    if (!player) return;
+    msg.hidden = true;
+    const owned = sk.price === 0 || wallet.skins.includes(sk.id);
+    btn.disabled = true; btn.textContent = owned ? 'Väljer…' : 'Köper…';
+    try {
+      if (owned && sk.id === 'neon' && !wallet.skins.includes('neon')) wallet.skins.unshift('neon');
+      const res = await rpc(owned ? 'nw_equip' : 'nw_buy', { p_id: player.id, p_secret: player.secret, p_skin: sk.id });
+      if (res && res.coins != null) setWallet(res);
+      if (res && res.error === 'poor') { msg.textContent = 'Du har inte tillräckligt med neon-coins än.'; msg.hidden = false; }
+      else if (res && res.error === 'auth') { msg.textContent = 'Ditt namn kunde inte verifieras. Återställ det med din kod.'; msg.hidden = false; }
+      else if (res && res.error && res.error !== 'owned') { msg.textContent = 'Det gick inte just nu. Försök igen.'; msg.hidden = false; }
+      else if (!owned) tone(660, 1320, 0.25, 'triangle', 0.08);
+    } catch (e) { msg.textContent = 'Kunde inte nå servern. Kontrollera internet och försök igen.'; msg.hidden = false; }
+    renderShop();
+  });
+  $('shClose').addEventListener('click', () => closeModal());
+  $('shJoin').addEventListener('click', () => openModal('mCreate'));
+  $('shopBtn').addEventListener('click', openShop);
+  $('shopBig').addEventListener('click', openShop);
+  window.addEventListener('resize', () => { if (!$('mShop').hidden) sizeShop(); });
+
+  function drawShop(dt, tt) {
+    // big preview with trail
+    const pr = shPrev.getBoundingClientRect(), pw = pr.width, ph = pr.height;
+    if (pw) {
+      const c = shPrevCtx, sk = skinById(shopSel);
+      c.clearRect(0, 0, pw, ph);
+      const g = c.createLinearGradient(0, 0, 0, ph); g.addColorStop(0, '#05030c'); g.addColorStop(1, '#1a0838');
+      c.fillStyle = g; c.fillRect(0, 0, pw, ph);
+      const bx = pw * 0.55, by = ph * 0.48 + Math.sin(tt * 2.6) * 6;
+      const wa = Math.sin(tt * (((tt * 1.6) % 1) < .25 ? 30 : 11));
+      if (!reduce) shopParts.push(trailPart(sk, bx - 20, by, -150, tt));
+      for (const q of shopParts) { q.x += q.vx * dt; q.y += q.vy * dt; if (q.g !== 0) q.vy += 150 * dt; q.life -= dt; if (q.rot != null) q.rot += dt * 2; }
+      shopParts = shopParts.filter(q => q.life > 0 && q.x > -20);
+      c.save(); c.globalCompositeOperation = 'lighter'; for (const q of shopParts) drawPart(c, q); c.restore();
+      c.save(); c.translate(bx, by); c.scale(1.8, 1.8); c.rotate(Math.sin(tt * 2.6 + 1.2) * 0.12);
+      sk.draw(c, tt, wa, false); c.restore();
+    }
+    // tiles
+    for (const tl of shopTiles) {
+      const r = tl.cnv.getBoundingClientRect(); if (!r.width) continue;
+      const c = tl.ctx; c.clearRect(0, 0, r.width, r.height);
+      c.save(); c.translate(r.width / 2, r.height / 2 + 2); c.scale(0.95, 0.95);
+      tl.sk.draw(c, tt, Math.sin(tt * 11), false); c.restore();
+    }
   }
 
   function draw() {
@@ -865,6 +1272,7 @@ const BUILD = '2026-11-05-auto1';
   function frame(now) {
     const dt = Math.min((now - last) / 1000, 1 / 30); last = now;
     update(dt); draw();
+    if (!modal.hidden && !$('mShop').hidden) drawShop(dt, t);
     requestAnimationFrame(frame);
   }
 
