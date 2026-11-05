@@ -101,13 +101,16 @@ h2{margin:0;font-family:var(--display);font-weight:400;font-size:clamp(40px,10vw
 .board li.gap,.board li.msg{display:block;text-align:center;color:var(--dim);font-size:13px}
 .lbnote{margin:0;font-size:13px;color:#ffb3ec;text-align:center}
 .board li[data-name]{cursor:pointer}
-.mcard .board li[data-name]:hover{background:rgba(255,255,255,.07)}
+.mcard .board li[data-name]:hover,#overList li[data-name]:hover{background:rgba(255,255,255,.07)}
 
 /* tabs + player stats */
 .tabs{display:flex;gap:4px;padding:4px;border-radius:12px;background:#07040f;border:1px solid rgba(33,243,255,.3)}
 .tab{flex:1;font:700 14px/1 var(--ui);letter-spacing:.1em;text-transform:uppercase;color:var(--dim);
   background:none;border:0;border-radius:9px;padding:11px 8px;cursor:pointer}
 .tab.on{background:var(--cyan);color:var(--void);box-shadow:0 0 14px rgba(33,243,255,.45)}
+.tabs.mini{padding:3px}
+.tabs.mini .tab{padding:8px 6px;font-size:12px}
+#over .card{pointer-events:auto;cursor:default}
 .pane{display:flex;flex-direction:column;gap:12px}
 .phead{display:flex;justify-content:space-between;align-items:baseline;gap:10px}
 .phead b{font-size:22px;color:var(--cyan);min-width:0;overflow-wrap:anywhere;text-shadow:0 0 10px rgba(33,243,255,.5)}
@@ -211,13 +214,19 @@ input:focus{border-color:var(--pink);box-shadow:0 0 14px rgba(255,43,214,.4)}
       </div>
       <p id="rank" class="rank"></p>
       <div id="overLb" class="lbwrap" hidden>
-        <p class="lbh">Leaderboard</p>
+        <div class="tabs mini" role="tablist">
+          <button type="button" role="tab" id="oTabLb" class="tab on" aria-selected="true">Leaderboard</button>
+          <button type="button" role="tab" id="oTabPl" class="tab" aria-selected="false">Player</button>
+        </div>
         <ol id="overList" class="board"></ol>
         <p id="lbNote" class="lbnote" hidden></p>
         <button id="join" class="btn pink small" type="button" hidden>Välj namn och kom med på listan</button>
       </div>
     </div>
-    <p id="again" class="hint" hidden>Tryck för att flyga igen</p>
+    <div id="again" class="go" hidden>
+      <button id="againBtn" class="btn" type="button">Spela igen</button>
+      <p class="sub">eller tryck utanför rutan / mellanslag</p>
+    </div>
   </div>
 </div>
 
@@ -509,6 +518,16 @@ const LB_KEY = 'sb_publishable_quKPe6oSHKYU431WblJnog_5ksg9cT2';   // den publik
   ['bList', 'pList'].forEach(id => $(id).addEventListener('click', e => {
     const el = e.target.closest('li[data-name]'); if (el) showPlayer(el.dataset.name);
   }));
+  // tabs + clickable names on the crash card open the full board
+  $('oTabPl').addEventListener('click', () => {
+    openModal('mBoard');
+    if (player) showPlayer(player.name); else showFind();
+  });
+  $('overList').addEventListener('click', e => {
+    const el = e.target.closest('li[data-name]'); if (!el) return;
+    openModal('mBoard'); showPlayer(el.dataset.name);
+  });
+  $('againBtn').addEventListener('click', () => input());
 
   function openModal(id) {
     secs.forEach(s => $(s).hidden = s !== id);
@@ -844,7 +863,7 @@ const LB_KEY = 'sb_publishable_quKPe6oSHKYU431WblJnog_5ksg9cT2';   // den publik
   }
 
   /* ---------- input ---------- */
-  const isUI = el => el && el.closest && el.closest('button, input, label, .modal');
+  const isUI = el => el && el.closest && el.closest('button, input, label, .modal, #over .card');
   $('stage').addEventListener('pointerdown', e => {
     if (isUI(e.target)) return;
     e.preventDefault(); input();
