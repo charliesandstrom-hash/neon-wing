@@ -386,7 +386,7 @@ const LB_KEY = 'sb_publishable_quKPe6oSHKYU431WblJnog_5ksg9cT2';   // den publik
 /* ===================================================================== */
 
 /* Versionsnummer: ÄNDRA vid varje uppdatering, så laddar alla öppna spel om sig automatiskt */
-const BUILD = '2026-11-06-music2';
+const BUILD = '2026-11-07-lobby1';
 
 (() => {
   const $ = id => document.getElementById(id);
@@ -682,7 +682,7 @@ const BUILD = '2026-11-06-music2';
   function initAudio() {
     if (ac) { if (ac.state === 'suspended') ac.resume().catch(() => {}); }
     else { try { ac = new (window.AudioContext || window.webkitAudioContext)(); if (ac.state === 'suspended') ac.resume().catch(() => {}); } catch (e) { return; } }
-    if (musicOn && !music.playing) music.start();
+    // the frame loop picks lobby or theme via syncMusic() on the next frame, after this tap has been handled
   }
   function tone(f1, f2, dur, type, vol) {
     if (!ac || muted) return;
@@ -706,13 +706,13 @@ const BUILD = '2026-11-06-music2';
     e.stopPropagation(); musicOn = !musicOn;
     try { localStorage.setItem('neonwing-music', musicOn ? 'on' : 'off'); } catch (x) {}
     labelAudio();
-    if (musicOn) initAudio(); else music.stop();
+    if (musicOn) initAudio(); else { music.stop(); lobby.stop(); }
   });
 
   /* ---------- music: "Night Flight" v2 (original synthwave + chip arps, 112-132 BPM following the game pace, A minor, 16-bar loop) ---------- */
   let kickP = 0, snareP = 0;   // beat pulses that drive the visuals (0..1)
   const music = (() => {
-    const BARS = 16, BASE_BPM = 112, MAX_BPM = 132;
+    const BARS = 16, BASE_BPM = 112, MAX_BPM = 128;
     const LEVEL = { menu: 0.24, play: 0.17 };
     const mf = m => 440 * Math.pow(2, (m - 69) / 12);
     const CH = [[57, 60, 64], [53, 57, 60], [55, 60, 64], [55, 59, 62]];
@@ -911,21 +911,21 @@ const BUILD = '2026-11-06-music2';
     M.setIntensity = d => { targetBpm = BASE_BPM + (MAX_BPM - BASE_BPM) * Math.max(0, Math.min(1, d)); };
     function runTimer() { clearInterval(timer); nextTime = Math.max(nextTime, ac.currentTime + 0.06); timer = setInterval(tick, 25); tick(); }
 
-    M.start = () => {
+    M.start = (fade = 5) => {
       if (!ac || M.playing) return;
       if (!built) build();
       M.playing = true; step = 0; nextTime = ac.currentTime + 0.08;
-      const now = ac.currentTime; fadeEnd = now + 5;
+      const now = ac.currentTime; fadeEnd = now + fade;
       out.gain.cancelScheduledValues(now); out.gain.setValueAtTime(0.0001, now);
       out.gain.linearRampToValueAtTime(LEVEL[mode] || LEVEL.menu, fadeEnd);   // slow fade-in
       runTimer();
     };
     let fadeEnd = 0;
-    M.stop = () => {
+    M.stop = (fade = 0.5) => {
       if (!M.playing) return;
       M.playing = false; clearInterval(timer); M.events.length = 0;
       const now = ac.currentTime;
-      out.gain.cancelScheduledValues(now); out.gain.setValueAtTime(out.gain.value, now); out.gain.linearRampToValueAtTime(0.0001, now + 0.5);
+      out.gain.cancelScheduledValues(now); out.gain.setValueAtTime(out.gain.value, now); out.gain.linearRampToValueAtTime(0.0001, now + fade);
     };
     // quieter during a run, a short dip on crash
     M.mode = m => {
@@ -943,6 +943,206 @@ const BUILD = '2026-11-06-music2';
     M.resume = () => { if (M.playing && ac) runTimer(); };
     return M;
   })();
+
+  /* ---------- lobby music: "Skyline Drift" (original chill synthwave, 88 BPM half-time, A minor, 16-bar loop) ---------- */
+  const lobby = (() => {
+    const BPM = 88, BARS = 16, STEP = 60 / BPM / 4, LEVEL = 0.26;
+    const mf = m => 440 * Math.pow(2, (m - 69) / 12);
+    const CH = [[57, 60, 64, 67], [53, 57, 60, 64], [55, 59, 60, 64], [52, 55, 59, 62]];   // Am7 Fmaj7 Cmaj7 Em7
+    const ROOT = [33, 29, 36, 28];
+    const MEL = [
+      [0,0,76,1.5],[0,1.5,74,.5],[0,2,72,2],
+      [1,0,69,1],[1,1,72,1],[1,2,76,2],
+      [2,0,79,1.5],[2,1.5,76,.5],[2,2,74,1],[2,3,72,1],
+      [3,0,71,3],[3,3,67,1],
+      [4,0,76,1],[4,1,81,1],[4,2,79,1],[4,3,76,1],
+      [5,0,77,1.5],[5,1.5,76,.5],[5,2,72,2],
+      [6,0,74,1],[6,1,76,1],[6,2,79,2],
+      [7,0,76,4]
+    ];
+    const PLUCK = [0, 2, 1, 3, 2, 1, 3, 2];
+    let out, comp, duck, verb, vIn, dIn, cIn, noiseBuf, pulseWave, built = false, timer = 0, nextTime = 0, step = 0;
+    const L = { playing: false, events: [] };
+
+    function build() {
+      comp = ac.createDynamicsCompressor(); comp.threshold.value = -18; comp.ratio.value = 3;
+      out = ac.createGain(); out.gain.value = 0.0001;
+      comp.connect(out); out.connect(ac.destination);
+      duck = ac.createGain(); duck.connect(comp);
+      const len = Math.floor(ac.sampleRate * 3.4), ir = ac.createBuffer(2, len, ac.sampleRate);
+      for (let ch = 0; ch < 2; ch++) { const d = ir.getChannelData(ch); for (let i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / len, 2.2); }
+      verb = ac.createConvolver(); verb.buffer = ir;
+      vIn = ac.createGain(); vIn.connect(verb); const vo = ac.createGain(); vo.gain.value = 0.55; verb.connect(vo); vo.connect(comp);
+      dIn = ac.createGain();
+      const dlL = ac.createDelay(2), dlR = ac.createDelay(2);
+      dlL.delayTime.value = dlR.delayTime.value = 60 / BPM * 0.75;
+      const fbL = ac.createGain(), fbR = ac.createGain(); fbL.gain.value = fbR.gain.value = 0.45;
+      const lpd = ac.createBiquadFilter(); lpd.type = 'lowpass'; lpd.frequency.value = 2200;
+      const merge = ac.createChannelMerger(2), dOut = ac.createGain(); dOut.gain.value = 0.38;
+      dIn.connect(lpd); lpd.connect(dlL); dlL.connect(fbL); fbL.connect(dlR); dlR.connect(fbR); fbR.connect(dlL);
+      dlL.connect(merge, 0, 0); dlR.connect(merge, 0, 1); merge.connect(dOut); dOut.connect(comp);
+      cIn = ac.createGain();
+      const cm = ac.createChannelMerger(2), cOut = ac.createGain(); cOut.gain.value = 0.8;
+      [[0.4, 0], [0.55, 1]].forEach(([rate, ch]) => {
+        const d = ac.createDelay(0.1); d.delayTime.value = 0.02;
+        const l = ac.createOscillator(), lg = ac.createGain(); l.frequency.value = rate; lg.gain.value = 0.005;
+        l.connect(lg); lg.connect(d.delayTime); l.start(); cIn.connect(d); d.connect(cm, 0, ch);
+      });
+      cm.connect(cOut); cOut.connect(duck);
+      noiseBuf = ac.createBuffer(1, ac.sampleRate * 2, ac.sampleRate);
+      const nd = noiseBuf.getChannelData(0); for (let i = 0; i < nd.length; i++) nd[i] = Math.random() * 2 - 1;
+      const N = 40, re = new Float32Array(N), im = new Float32Array(N), duty = 0.25;
+      for (let n = 1; n < N; n++) { const a = 2 / (n * Math.PI) * Math.sin(n * Math.PI * duty); re[n] = a * Math.cos(n * Math.PI * duty); im[n] = a * Math.sin(n * Math.PI * duty); }
+      pulseWave = ac.createPeriodicWave(re, im);
+      // soft neon-rain bed that slowly breathes
+      const rn = ac.createBufferSource(); rn.buffer = noiseBuf; rn.loop = true;
+      const rbp = ac.createBiquadFilter(); rbp.type = 'bandpass'; rbp.frequency.value = 2400; rbp.Q.value = 0.7;
+      const rainG = ac.createGain(); rainG.gain.value = 0.018;
+      const rl = ac.createOscillator(), rlg = ac.createGain(); rl.frequency.value = 0.07; rlg.gain.value = 900;
+      rl.connect(rlg); rlg.connect(rbp.frequency); rl.start();
+      rn.connect(rbp); rbp.connect(rainG); rainG.connect(comp); rn.start();
+      built = true;
+    }
+    const sendTo = (node, d, v, c) => {
+      if (d) { const g = ac.createGain(); g.gain.value = d; node.connect(g); g.connect(dIn); }
+      if (v) { const g = ac.createGain(); g.gain.value = v; node.connect(g); g.connect(vIn); }
+      if (c) { const g = ac.createGain(); g.gain.value = c; node.connect(g); g.connect(cIn); }
+    };
+    function kick(t) {
+      const o = ac.createOscillator(), g = ac.createGain();
+      o.frequency.setValueAtTime(120, t); o.frequency.exponentialRampToValueAtTime(38, t + 0.16);
+      g.gain.setValueAtTime(0.8, t); g.gain.exponentialRampToValueAtTime(0.001, t + 0.42);
+      o.connect(g); g.connect(comp); o.start(t); o.stop(t + 0.45);
+      duck.gain.setValueAtTime(1, t); duck.gain.linearRampToValueAtTime(0.55, t + 0.02); duck.gain.linearRampToValueAtTime(1, t + 0.5);
+      L.events.push({ t, type: 'kick' });
+    }
+    function snare(t) {
+      const n = ac.createBufferSource(); n.buffer = noiseBuf;
+      const bp = ac.createBiquadFilter(); bp.type = 'bandpass'; bp.frequency.value = 1800; bp.Q.value = 0.8;
+      const g = ac.createGain(); g.gain.setValueAtTime(0.32, t); g.gain.exponentialRampToValueAtTime(0.001, t + 0.3);
+      n.connect(bp); bp.connect(g); g.connect(comp); sendTo(g, 0, 1.1); n.start(t, Math.random()); n.stop(t + 0.32);
+      L.events.push({ t, type: 'snare' });
+    }
+    function hat(t, v) {
+      const n = ac.createBufferSource(); n.buffer = noiseBuf;
+      const hp = ac.createBiquadFilter(); hp.type = 'highpass'; hp.frequency.value = 8500;
+      const p = ac.createStereoPanner(); p.pan.value = -0.3;
+      const g = ac.createGain(); g.gain.setValueAtTime(v, t); g.gain.exponentialRampToValueAtTime(0.001, t + 0.05);
+      n.connect(hp); hp.connect(g); g.connect(p); p.connect(comp); n.start(t, Math.random()); n.stop(t + 0.07);
+      L.events.push({ t, type: 'hat' });
+    }
+    function pad(notes, t, dur, bar) {
+      const lp = ac.createBiquadFilter(); lp.type = 'lowpass'; lp.Q.value = 3;
+      const phase = (bar % 4) / 4, f0 = 500 + 1700 * Math.sin(phase * Math.PI), f1 = 500 + 1700 * Math.sin((phase + .25) * Math.PI);
+      lp.frequency.setValueAtTime(f0, t); lp.frequency.linearRampToValueAtTime(f1, t + dur);
+      const g = ac.createGain(); lp.connect(g); g.connect(duck); sendTo(g, 0, 0.9, 1);
+      g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.045, t + 0.6);
+      g.gain.setValueAtTime(0.045, t + dur - 0.3); g.gain.exponentialRampToValueAtTime(0.0001, t + dur + 0.8);
+      for (const m of notes) for (const det of [-8, 0, 8]) {
+        const o = ac.createOscillator(); o.type = 'sawtooth'; o.frequency.value = mf(m); o.detune.value = det;
+        o.connect(lp); o.start(t); o.stop(t + dur + 0.9);
+      }
+    }
+    function bass(m, t, dur) {
+      const o = ac.createOscillator(), s = ac.createOscillator(), lp = ac.createBiquadFilter(), g = ac.createGain();
+      o.type = 'sine'; s.type = 'sawtooth'; o.frequency.value = mf(m); s.frequency.value = mf(m);
+      lp.type = 'lowpass'; lp.frequency.value = 380;
+      const sg = ac.createGain(); sg.gain.value = 0.25;
+      o.connect(g); s.connect(sg); sg.connect(lp); lp.connect(g); g.connect(duck);
+      g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.28, t + 0.03);
+      g.gain.setValueAtTime(0.28, t + dur * 0.7); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+      o.start(t); s.start(t); o.stop(t + dur + 0.05); s.stop(t + dur + 0.05);
+    }
+    function pluck(m, t, pan) {
+      const o = ac.createOscillator(), o2 = ac.createOscillator(), lp = ac.createBiquadFilter(), g = ac.createGain(), p = ac.createStereoPanner();
+      o.type = 'triangle'; o2.type = 'square'; o.frequency.value = mf(m); o2.frequency.value = mf(m); o2.detune.value = 5;
+      const g2 = ac.createGain(); g2.gain.value = 0.25;
+      lp.type = 'lowpass'; lp.Q.value = 5; lp.frequency.setValueAtTime(3200, t); lp.frequency.exponentialRampToValueAtTime(500, t + 0.35);
+      p.pan.value = pan;
+      o.connect(lp); o2.connect(g2); g2.connect(lp); lp.connect(g); g.connect(p); p.connect(duck); sendTo(g, 0.7, 0.4);
+      g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.07, t + 0.005); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.5);
+      o.start(t); o2.start(t); o.stop(t + 0.55); o2.stop(t + 0.55);
+    }
+    function sparkle(m, t, pan) {
+      const o = ac.createOscillator(), g = ac.createGain(), p = ac.createStereoPanner();
+      o.setPeriodicWave(pulseWave); o.frequency.value = mf(m); p.pan.value = pan;
+      o.connect(g); g.connect(p); p.connect(comp); sendTo(g, 0.6, 0.5);
+      g.gain.setValueAtTime(0.018, t); g.gain.exponentialRampToValueAtTime(0.0001, t + STEP * 0.9);
+      o.start(t); o.stop(t + STEP);
+    }
+    function lead(m, t, dur) {
+      const a = ac.createOscillator(), b = ac.createOscillator(), lp = ac.createBiquadFilter(), g = ac.createGain();
+      a.type = 'triangle'; b.type = 'sawtooth'; a.frequency.value = mf(m); b.frequency.value = mf(m); b.detune.value = -6;
+      const lfo = ac.createOscillator(), lg = ac.createGain(); lfo.frequency.value = 4.8; lg.gain.value = 12;
+      lfo.connect(lg); lg.connect(a.detune); lg.connect(b.detune);
+      const bg = ac.createGain(); bg.gain.value = 0.35;
+      lp.type = 'lowpass'; lp.Q.value = 2; lp.frequency.setValueAtTime(900, t); lp.frequency.linearRampToValueAtTime(2400, t + Math.min(0.6, dur));
+      a.connect(lp); b.connect(bg); bg.connect(lp); lp.connect(g); g.connect(comp); sendTo(g, 0.45, 0.6);
+      const end = t + dur;
+      g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.085, t + 0.08);
+      g.gain.setValueAtTime(0.085, end - 0.1); g.gain.exponentialRampToValueAtTime(0.0001, end + 0.3);
+      [a, b, lfo].forEach(o => { o.start(t); o.stop(end + 0.35); });
+    }
+    function riser(t, dur) {
+      const n = ac.createBufferSource(); n.buffer = noiseBuf; n.loop = true;
+      const bp = ac.createBiquadFilter(); bp.type = 'bandpass'; bp.Q.value = 2;
+      bp.frequency.setValueAtTime(400, t); bp.frequency.exponentialRampToValueAtTime(6000, t + dur);
+      const g = ac.createGain(); g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.12, t + dur); g.gain.linearRampToValueAtTime(0, t + dur + 0.1);
+      n.connect(bp); bp.connect(g); g.connect(comp); sendTo(g, 0, 0.6); n.start(t); n.stop(t + dur + 0.2);
+    }
+    function scheduleStep(s, t) {
+      const bar = Math.floor(s / 16) % BARS, st = s % 16, i = bar % 4, ch = CH[i];
+      if (st === 0) {
+        L.events.push({ t, type: 'bar', bar });
+        pad(ch, t, STEP * 16, bar);
+        bass(ROOT[i], t, STEP * 7.5); bass(ROOT[i], t + STEP * 10, STEP * 5.5);
+        if (bar === 7) riser(t, STEP * 16);
+      }
+      if (st % 2 === 0 && bar >= 1) pluck(ch[PLUCK[(st / 2) % 8]] + 12, t, st % 4 ? 0.5 : -0.5);
+      if (bar >= 2) {
+        if (st === 0 || st === 10) kick(t);
+        if (st === 8) snare(t);
+        if (st % 2 === 0) hat(t, st % 4 === 2 ? 0.05 : 0.025);
+      }
+      if (bar >= 8 && bar % 2 === 1) sparkle(ch[st % 4] + 24, t, st % 2 ? 0.7 : -0.7);
+      if (bar >= 8) for (const n of MEL) if (n[0] === bar - 8 && Math.round(n[1] * 4) === st) lead(n[2], t, n[3] * STEP * 4);
+    }
+    function tick() {
+      while (nextTime < ac.currentTime + 0.15) { scheduleStep(step, nextTime); nextTime += STEP; step++; }
+      if (L.events.length > 400) L.events.splice(0, L.events.length - 400);
+    }
+    function runTimer() { clearInterval(timer); nextTime = Math.max(nextTime, ac.currentTime + 0.06); timer = setInterval(tick, 25); tick(); }
+    L.start = (fade = 4) => {
+      if (!ac || L.playing) return;
+      if (!built) build();
+      L.playing = true; step = 0; nextTime = ac.currentTime + 0.08;
+      const now = ac.currentTime;
+      out.gain.cancelScheduledValues(now); out.gain.setValueAtTime(Math.max(0.0001, out.gain.value), now);
+      out.gain.linearRampToValueAtTime(LEVEL, now + fade);
+      runTimer();
+    };
+    L.stop = (fade = 0.5) => {
+      if (!L.playing) return;
+      L.playing = false; clearInterval(timer); L.events.length = 0;
+      const now = ac.currentTime;
+      out.gain.cancelScheduledValues(now); out.gain.setValueAtTime(out.gain.value, now); out.gain.linearRampToValueAtTime(0.0001, now + fade);
+    };
+    L.pause = () => { clearInterval(timer); };
+    L.resume = () => { if (L.playing && ac) runTimer(); };
+    return L;
+  })();
+
+  // which track should play right now: lobby on the home screen and in the shop/leaderboard, the theme in rounds and on the crash card
+  function syncMusic() {
+    if (!ac || !musicOn) return;
+    const boardOpen = !modal.hidden && (!$('mShop').hidden || !$('mBoard').hidden);
+    const wantLobby = state === 'ready' || boardOpen;
+    const want = wantLobby ? lobby : music, other = wantLobby ? music : lobby;
+    if (want.playing) return;
+    const fresh = !other.playing;
+    if (other.playing) other.stop(1.5);
+    want.start(fresh ? (wantLobby ? 4 : 5) : 1.5);
+  }
 
   /* ---------- leaderboard ---------- */
   const lbOn = !!(LB_URL && LB_KEY);
@@ -1305,7 +1505,7 @@ const BUILD = '2026-11-06-music2';
     } else if (state === 'play') {
       const d = Math.min(score / 40, 1);
       speed = 190 + 90 * d;
-      music.setIntensity(d);
+      music.setIntensity(Math.pow(Math.min(score / 100, 1), 1.6));   // tempo rises slowly: 112 -> 128 BPM at 100 points
       const spacing = 245 - 35 * d;
       bird.vy = Math.min(bird.vy + GRAV * dt, 720); bird.y += bird.vy * dt;
       if (bird.y < R) { bird.y = R; bird.vy = 0; }
@@ -1957,8 +2157,10 @@ const BUILD = '2026-11-06-music2';
     const dt = Math.min((now - last) / 1000, 1 / 30); last = now;
     lastDt = dt;
     // beat-synced visuals: consume what the music has played so far
-    if (music.playing && ac) {
-      const ev = music.events;
+    syncMusic();
+    if (ac) for (const src of [music, lobby]) {
+      if (!src.playing) continue;
+      const ev = src.events;
       while (ev.length && ev[0].t <= ac.currentTime) {
         const e = ev.shift(); if (reduce) continue;
         if (e.type === 'kick') kickP = 1;
@@ -1988,6 +2190,9 @@ const BUILD = '2026-11-06-music2';
       e.preventDefault(); if (!e.repeat) input();
     }
   });
+  // any first touch or key (name box, shop button…) unlocks audio so the lobby track can start
+  document.addEventListener('pointerdown', () => initAudio(), true);
+  document.addEventListener('keydown', () => initAudio(), true);
   window.addEventListener('resize', resize);
   window.addEventListener('orientationchange', () => setTimeout(resize, 200));
   if (window.visualViewport) visualViewport.addEventListener('resize', resize);
@@ -1996,8 +2201,8 @@ const BUILD = '2026-11-06-music2';
   document.addEventListener('touchmove', e => { if (!e.target.closest || !e.target.closest('.mcard')) e.preventDefault(); }, { passive: false });
   document.addEventListener('visibilitychange', () => {
     last = performance.now();
-    if (document.visibilityState === 'visible') { music.resume(); checkUpdate(); }
-    else music.pause();
+    if (document.visibilityState === 'visible') { music.resume(); lobby.resume(); checkUpdate(); }
+    else { music.pause(); lobby.pause(); }
   });
 
   /* ---------- auto-update ---------- */
