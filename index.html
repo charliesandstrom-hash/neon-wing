@@ -129,6 +129,12 @@ h2{margin:0;font-family:var(--display);font-weight:400;font-size:clamp(40px,10vw
   border:0;border-radius:10px;padding:13px 18px;cursor:pointer;box-shadow:0 0 18px rgba(33,243,255,.45)}
 .btn:hover{filter:brightness(1.1)}
 .btn:disabled{opacity:.45;cursor:default;box-shadow:none;filter:none}
+.newstag{margin:0;font-size:12px;font-weight:700;letter-spacing:.3em;text-transform:uppercase;color:var(--lime);text-shadow:0 0 10px rgba(182,255,59,.6)}
+.newstitle{font-family:var(--display);font-weight:400;font-size:clamp(30px,8vw,42px);line-height:1;color:#fff;
+  text-shadow:0 0 6px #3dd8ff,0 0 22px #3dd8ff}
+.newsdemo{display:block;width:100%;height:190px;border-radius:12px;background:#05030c;border:1px solid rgba(61,216,255,.4)}
+.newslist{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:6px;color:#d6cbea;font-size:14.5px;line-height:1.45}
+.newslist b{color:#fff}
 .btn.small{padding:10px 14px;font-size:13px}
 .btn.ghost{background:transparent;color:var(--cyan);border:1.5px solid var(--cyan);box-shadow:none}
 .btn.pink{background:var(--pink);color:#fff;box-shadow:0 0 18px rgba(255,43,214,.5)}
@@ -308,6 +314,20 @@ input:focus{border-color:var(--pink);box-shadow:0 0 14px rgba(255,43,214,.4)}
       <div class="row"><button class="link" type="button" id="recBack">Tillbaka</button></div>
     </section>
 
+    <section id="mNews" lang="en" hidden>
+      <p class="newstag">New update</p>
+      <h3 class="newstitle">Water Pipes</h3>
+      <canvas id="newsDemo" class="newsdemo" aria-label="Demo: a bird flies through a water pipe, gets wet and jumps lower"></canvas>
+      <ul class="newslist">
+        <li><b>They show up after 40 points.</b> They're rare: about 1 in 10 pipes, never two in a row.</li>
+        <li><b>Water pipes stand still</b>, and water pours through the whole gap, so you can't dodge it.</li>
+        <li><b>Fly through and you're wet for 3.5 seconds.</b> While you're wet, you only jump half as high.</li>
+        <li>The <b>ring around your bird</b> shows how long you stay wet. Hit water again and the timer starts over.</li>
+        <li><b>Tip:</b> flap a little earlier and a little more often while you're wet.</li>
+      </ul>
+      <button class="btn" type="button" id="newsOk">Got it!</button>
+    </section>
+
     <section id="mShop" hidden>
       <div class="shophead">
         <h3>Shop</h3>
@@ -386,7 +406,7 @@ const LB_KEY = 'sb_publishable_quKPe6oSHKYU431WblJnog_5ksg9cT2';   // den publik
 /* ===================================================================== */
 
 /* Versionsnummer: ÄNDRA vid varje uppdatering, så laddar alla öppna spel om sig automatiskt */
-const BUILD = '2026-11-07-lobby1';
+const BUILD = '2026-11-08-water1';
 
 (() => {
   const $ = id => document.getElementById(id);
@@ -395,6 +415,7 @@ const BUILD = '2026-11-07-lobby1';
   const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
 
   const GRAV = 1750, FLAP = -520, R = 14, PW = 66, CAP = 22;
+  const WET_TIME = 3.5, WET_FLAP = FLAP * Math.SQRT1_2;   // wet: half the jump height (height ~ v^2)
   const COLS = ['#ff2bd6', '#21f3ff'];
   const KEY = 'neonwing-best', PKEY = 'neonwing-player', WKEY = 'neonwing-wallet';
   const TAU = Math.PI * 2;
@@ -646,6 +667,7 @@ const BUILD = '2026-11-07-lobby1';
   let stars = [], city = [], cityW = 1;
   let state = 'ready', t = 0, deadT = 0, score = 0, best = 0;
   let bird = { y: 300, vy: 0, rot: 0, wing: 0, flapT: 0 };
+  let wet = 0, wasInWater = false, sinceWater = 0, calmPipes = 0;   // water pipes
   let pipes = [], parts = [], pipeN = 0;
   let speed = 120, cityOff = 0, groundOff = 0, shake = 0, flash = 0;
 
@@ -1248,7 +1270,7 @@ const BUILD = '2026-11-07-lobby1';
 
   /* modal */
   const modal = $('modal');
-  const secs = ['mCreate', 'mCode', 'mRecover', 'mBoard', 'mShop'];
+  const secs = ['mCreate', 'mCode', 'mRecover', 'mBoard', 'mShop', 'mNews'];
   /* player stats */
   function setTab(t) {
     const lb = t === 'lb';
@@ -1339,7 +1361,10 @@ const BUILD = '2026-11-07-lobby1';
     }
   }
   function closeModal() {
+    const wasNews = !$('mNews').hidden;
     modal.hidden = true; if (document.activeElement) document.activeElement.blur();
+    // a brand-new visitor sees the news first, then gets asked for a name
+    if (wasNews && lbOn && !player) setTimeout(() => { if (modal.hidden && state === 'ready') openModal('mCreate'); }, 250);
     setTimeout(() => checkUpdate(), 0);
   }
   function setWho() {
@@ -1361,6 +1386,7 @@ const BUILD = '2026-11-07-lobby1';
       else if (res.error) err(eEl, 'Namnet måste vara 3–16 tecken: bokstäver, siffror, _ eller -.');
       else {
         player = { id: res.id, name: res.name, secret: res.secret, code: res.code, best: 0 };
+        if (newsSeenLocal()) rpc('nw_seen_news', { p_id: res.id, p_secret: res.secret, p_key: NEWS_KEY }).catch(() => {});
         setWallet({ coins: 0, skins: ['neon'], skin: 'neon', maps: ['city'], map: 'city' });
         savePlayer(); setWho();
         $('cName').textContent = res.name; $('cCode').textContent = res.code;
@@ -1425,8 +1451,101 @@ const BUILD = '2026-11-07-lobby1';
         if (me && me.best > best) { best = me.best; try { localStorage.setItem(KEY, best); } catch (e) {} $('best0').textContent = best; }
       }).catch(() => {});
     } else {
-      setTimeout(() => { if (state === 'ready' && modal.hidden) openModal('mCreate'); }, 600);
+      setTimeout(() => { if (state === 'ready' && modal.hidden && newsState !== 'pending') openModal('mCreate'); }, 600);
     }
+  }
+
+  /* ---------- one-time "what's new" popup (once per account; also remembered on this device) ---------- */
+  const NEWS_KEY = 'water', NEWS_LS = 'neonwing-news-' + NEWS_KEY;
+  let newsState = 'checking';   // checking -> pending (show when the home screen is free) -> done
+  const newsSeenLocal = () => { try { return localStorage.getItem(NEWS_LS) === '1'; } catch (e) { return false; } };
+  async function decideNews() {
+    if (newsSeenLocal()) { newsState = 'done'; return; }
+    if (lbOn && player) {
+      try {
+        const w = await rpc('nw_wallet', { p_id: player.id, p_secret: player.secret });
+        if (w && !w.error) {
+          setWallet(w);
+          if (Array.isArray(w.news) && w.news.includes(NEWS_KEY)) {   // already seen on another device
+            try { localStorage.setItem(NEWS_LS, '1'); } catch (e) {}
+            newsState = 'done'; return;
+          }
+        }
+      } catch (e) {}
+    }
+    newsState = 'pending';
+  }
+  function showNews() {
+    newsState = 'done';
+    try { localStorage.setItem(NEWS_LS, '1'); } catch (e) {}
+    if (lbOn && player) rpc('nw_seen_news', { p_id: player.id, p_secret: player.secret, p_key: NEWS_KEY }).catch(() => {});
+    openModal('mNews');
+    requestAnimationFrame(sizeNewsDemo);
+  }
+  $('newsOk').addEventListener('click', () => closeModal());
+  decideNews();
+
+  /* the little looping demo inside the popup: an autopilot bird meets a water pipe */
+  const ND = { W: 400, G: 360, scale: 1, pipes: [], parts: [], y: 180, vy: 0, wet: 0, inW: false, n: 0, wing: 0, t: 0 };
+  function ndSpawn(x) {
+    const water = ND.n % 3 === 1;
+    ND.pipes.push({ x, cy: water ? 180 : 180 + (Math.random() - .5) * 50, gap: 150, water, idx: ND.n, col: COLS[ND.n % 2], drops: [] });
+    ND.n++;
+  }
+  function sizeNewsDemo() {
+    const cnv = $('newsDemo'), r = fitCanvas(cnv); if (!r.width) return;
+    ND.scale = r.height / 400; ND.W = r.width / ND.scale;
+    ND.pipes = []; ND.parts = []; ND.n = 0; ND.y = 180; ND.vy = 0; ND.wet = 0; ND.inW = false;
+    for (let x = ND.W * 0.55; x < ND.W + 260; x += 240) ndSpawn(x);
+  }
+  function drawNewsDemo(dt) {
+    const cnv = $('newsDemo'), r = cnv.getBoundingClientRect(); if (!r.width) return;
+    const c = cnv.getContext('2d'), sp = 200, bx = ND.W * 0.3;
+    ND.t += dt; ND.wet = Math.max(0, ND.wet - dt); ND.wing += dt * 13;
+    for (const p of ND.pipes) p.x -= sp * dt;
+    ND.pipes = ND.pipes.filter(p => p.x > -PW - 30);
+    const lp = ND.pipes[ND.pipes.length - 1]; if (lp && lp.x < ND.W + 20 - 240) ndSpawn(lp.x + 240);
+    const next = ND.pipes.find(p => p.x + PW > bx - R) || { cy: 180 };
+    if (ND.y > next.cy + 16 && ND.vy > -50) ND.vy = ND.wet > 0 ? WET_FLAP : FLAP;
+    ND.vy = Math.min(ND.vy + GRAV * dt, 720); ND.y = Math.max(20, Math.min(ND.G - R, ND.y + ND.vy * dt));
+    let inW = false;
+    for (const p of ND.pipes) if (p.water && bx + R > p.x + 4 && bx - R < p.x + PW - 4 && ND.y > p.cy - p.gap / 2 && ND.y < p.cy + p.gap / 2) inW = true;
+    if (inW) {
+      if (!ND.inW) for (let i = 0; i < 18; i++) { const a = Math.random() * TAU, v = 60 + Math.random() * 160; ND.parts.push({ x: bx, y: ND.y, vx: Math.cos(a) * v, vy: Math.sin(a) * v, life: .6, max: .6, col: i % 2 ? '#3dd8ff' : '#ffffff', s: 2.2 }); }
+      ND.wet = WET_TIME;
+    }
+    ND.inW = inW;
+    ND.parts.push({ x: bx - 12, y: ND.y + (Math.random() - .5) * 6, vx: -sp * .9 - 40, vy: (Math.random() - .5) * 20, life: .4, max: .4, col: ND.wet > 0 ? '#3dd8ff' : (Math.random() < .5 ? '#21f3ff' : '#ff2bd6'), s: 2.2 });
+    if (ND.wet > 0 && Math.random() < .6) ND.parts.push({ x: bx + (Math.random() - .5) * 20, y: ND.y + 8, vx: -90, vy: 40 + Math.random() * 60, life: .6, max: .6, col: '#9fe8ff', s: 1.8 });
+    for (const q of ND.parts) { q.x += q.vx * dt; q.y += q.vy * dt; q.vy += 300 * dt; q.life -= dt; }
+    ND.parts = ND.parts.filter(q => q.life > 0);
+
+    c.clearRect(0, 0, r.width, r.height);
+    c.save(); c.scale(ND.scale, ND.scale);
+    const g = c.createLinearGradient(0, 0, 0, ND.G); g.addColorStop(0, '#05030c'); g.addColorStop(.65, '#1a0838'); g.addColorStop(1, '#3a0b4f');
+    c.fillStyle = g; c.fillRect(0, 0, ND.W, ND.G);
+    for (const p of ND.pipes) {
+      if (p.water) { drawWaterPipe(c, p, ND.G, ND.t, sp, dt); continue; }
+      const top = p.cy - p.gap / 2, bot = p.cy + p.gap / 2;
+      c.save();
+      mNeonRect(c, p.x, -10, PW, top - CAP + 10, p.col); mNeonRect(c, p.x - 6, top - CAP, PW + 12, CAP, p.col);
+      mNeonRect(c, p.x - 6, bot, PW + 12, CAP, p.col); mNeonRect(c, p.x, bot + CAP, PW, ND.G - bot - CAP + 4, p.col);
+      c.restore();
+    }
+    c.fillStyle = '#22073d'; c.fillRect(0, ND.G, ND.W, 400 - ND.G);
+    c.save(); c.strokeStyle = '#21f3ff'; c.shadowColor = '#21f3ff'; c.shadowBlur = 14; c.lineWidth = 2.5;
+    c.beginPath(); c.moveTo(0, ND.G); c.lineTo(ND.W, ND.G); c.stroke(); c.restore();
+    c.save(); c.globalCompositeOperation = 'lighter';
+    for (const q of ND.parts) { c.globalAlpha = Math.max(0, q.life / q.max); c.fillStyle = q.col; c.beginPath(); c.arc(q.x, q.y, q.s, 0, TAU); c.fill(); }
+    c.restore();
+    c.save(); c.translate(bx, ND.y); c.rotate(Math.max(-0.5, Math.min(1, ND.vy / 560)));
+    curSkin().draw(c, ND.t, Math.sin(ND.wing), false); c.restore();
+    drawWetFx(c, bx, ND.y, ND.wet);
+    c.save(); c.font = '700 22px "Chakra Petch", sans-serif'; c.textAlign = 'center';
+    if (ND.wet > 0) { c.fillStyle = '#3dd8ff'; c.shadowColor = '#3dd8ff'; c.shadowBlur = 12; c.fillText('WET: half jump height', ND.W / 2, 34); }
+    else { c.fillStyle = 'rgba(244,236,255,.7)'; c.fillText('Fly through the water…', ND.W / 2, 34); }
+    c.restore();
+    c.restore();
   }
 
   /* ---------- game flow ---------- */
@@ -1439,13 +1558,23 @@ const BUILD = '2026-11-07-lobby1';
     }
   }
   function flap() {
-    bird.vy = FLAP; bird.flapT = 0.25;
-    burst(BX - 8, bird.y + 4, 8, ['#21f3ff', '#ffffff'], 140, 0.35, 2.4);
-    tone(480, 820, 0.09, 'square', 0.05);
+    bird.vy = wet > 0 ? WET_FLAP : FLAP; bird.flapT = 0.25;
+    burst(BX - 8, bird.y + 4, 8, wet > 0 ? ['#3dd8ff', '#ffffff'] : ['#21f3ff', '#ffffff'], 140, 0.35, 2.4);
+    if (wet > 0) tone(330, 520, 0.09, 'square', 0.045); else tone(480, 820, 0.09, 'square', 0.05);
+  }
+  function splashSnd() {
+    if (!ac || muted) return;
+    const n = ac.currentTime, len = Math.floor(ac.sampleRate * 0.5), b = ac.createBuffer(1, len, ac.sampleRate), d = b.getChannelData(0);
+    for (let i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / len, 2);
+    const s = ac.createBufferSource(); s.buffer = b;
+    const f = ac.createBiquadFilter(); f.type = 'lowpass'; f.frequency.setValueAtTime(3000, n); f.frequency.exponentialRampToValueAtTime(400, n + 0.4);
+    const g = ac.createGain(); g.gain.value = 0.22; s.connect(f); f.connect(g); g.connect(ac.destination); s.start(n);
+    tone(600, 180, 0.25, 'sine', 0.06);
   }
   function reset() {
     pipes = []; parts = []; score = 0; pipeN = 0;
     bird.y = G * 0.45; bird.vy = 0; bird.rot = 0;
+    wet = 0; wasInWater = false; sinceWater = 0; calmPipes = 0;
   }
   let roundStart = 0;
   function startPlay() {
@@ -1462,7 +1591,7 @@ const BUILD = '2026-11-07-lobby1';
     else if (state === 'dead' && deadT > 0.9) { reset(); startPlay(); flap(); }
   }
   function die() {
-    state = 'dead'; deadT = 0; music.mode('crash');
+    state = 'dead'; deadT = 0; music.mode('crash'); wet = 0;
     shake = reduce ? 0 : 14; flash = 0.85;
     burst(BX, bird.y, 40, ['#ff2bd6', '#21f3ff', '#ffffff', '#ffd23b'], 320, 0.9, 3.2);
     tone(220, 40, 0.5, 'sawtooth', 0.09);
@@ -1478,14 +1607,19 @@ const BUILD = '2026-11-07-lobby1';
   function spawn(x) {
     const d = Math.min(score / 40, 1);
     const gap = 182 - 46 * d;
-    const amp = score >= 12 && Math.random() < 0.6 ? Math.min(45, 10 + (score - 12) * 3) : 0;
+    // water pipes: from 40 points, ~1 in 10, never two in a row, at least 6 normal pipes between
+    const water = score >= 40 && sinceWater >= 6 && Math.random() < 0.25;
+    const amp = !water && calmPipes === 0 && score >= 12 && Math.random() < 0.6 ? Math.min(45, 10 + (score - 12) * 3) : 0;
     const lo = 70 + gap / 2 + amp, hi = G - 70 - gap / 2 - amp;
     let base = lo + Math.random() * Math.max(0, hi - lo);
     const prev = pipes[pipes.length - 1];
     if (prev) base = Math.max(prev.base - 210, Math.min(prev.base + 210, base));
+    // fairness: while the bird may still be wet, never ask for a big climb
+    if (calmPipes > 0 && prev) base = Math.max(prev.base - 30, Math.min(prev.base + 70, base));
     pipes.push({ x, base, cy: base, gap, amp, f: 1.4 + Math.random(), ph: Math.random() * 6.28,
-      col: (pipeN + 1) % 10 === 0 ? '#b6ff3b' : COLS[pipeN % 2], idx: pipeN, scored: false });
+      col: (pipeN + 1) % 10 === 0 ? '#b6ff3b' : COLS[pipeN % 2], idx: pipeN, scored: false, water, drops: [] });
     pipeN++;
+    if (water) { sinceWater = 0; calmPipes = 5; } else { sinceWater++; if (calmPipes > 0) calmPipes--; }
   }
   function hitRect(x, y, w, h) {
     const nx = Math.max(x, Math.min(BX, x + w)), ny = Math.max(y, Math.min(bird.y, y + h));
@@ -1498,6 +1632,7 @@ const BUILD = '2026-11-07-lobby1';
     bird.flapT = Math.max(0, bird.flapT - dt);
     bird.wing += dt * (bird.flapT > 0 ? 30 : 11);
     shake *= Math.pow(0.02, dt); flash = Math.max(0, flash - dt * 2.5);
+    if (wet > 0) wet = Math.max(0, wet - dt);
 
     if (state === 'ready') {
       speed = 120; music.setIntensity(0);
@@ -1511,9 +1646,11 @@ const BUILD = '2026-11-07-lobby1';
       if (bird.y < R) { bird.y = R; bird.vy = 0; }
       bird.rot += (Math.max(-0.5, Math.min(1.25, bird.vy / 560)) - bird.rot) * Math.min(1, dt * 12);
 
+      let inWater = false;
       for (const p of pipes) {
         p.x -= speed * dt;
         p.cy = p.base + Math.sin(t * p.f + p.ph) * p.amp;
+        if (p.water && BX + R > p.x + 4 && BX - R < p.x + PW - 4 && bird.y > p.cy - p.gap / 2 && bird.y < p.cy + p.gap / 2) inWater = true;
         if (!p.scored && p.x + PW < BX - R) {
           p.scored = true; score++;
           scoreEl.textContent = score;
@@ -1525,6 +1662,11 @@ const BUILD = '2026-11-07-lobby1';
         if (hitRect(p.x - 6, top - CAP, PW + 12, CAP) || hitRect(p.x, -60, PW, top - CAP + 60) ||
             hitRect(p.x - 6, bot, PW + 12, CAP) || hitRect(p.x, bot + CAP, PW, G - bot)) { die(); break; }
       }
+      if (state === 'play' && inWater) {
+        if (!wasInWater) { splashSnd(); burst(BX, bird.y, 22, ['#3dd8ff', '#bff4ff', '#ffffff'], 220, 0.6, 2.6); if (!reduce) shake = Math.max(shake, 5); }
+        wet = WET_TIME;
+      }
+      wasInWater = inWater;
       pipes = pipes.filter(p => p.x > -PW - 30);
       const last = pipes[pipes.length - 1];
       if (!last) spawn(W + 80); else if (last.x < W + 20 - spacing) spawn(last.x + spacing);
@@ -1544,6 +1686,8 @@ const BUILD = '2026-11-07-lobby1';
     if (state !== 'dead' && Math.random() < (reduce ? 0.3 : 1)) {
       parts.push(trailPart(curSkin(), BX - 12, bird.y, -speed * 0.9 - 40, t));
     }
+    if (wet > 0 && state !== 'dead' && Math.random() < 0.6)   // drips while wet
+      parts.push({ x: BX + (Math.random() - .5) * 20, y: bird.y + 8, vx: -speed * 0.3 - 30, vy: 40 + Math.random() * 60, life: .6, max: .6, col: '#9fe8ff', s: 1.8 });
     for (const q of parts) {
       q.x += q.vx * dt; q.y += q.vy * dt; if (q.g !== 0) q.vy += 300 * dt; q.life -= dt;
       if (q.rot != null) q.rot += dt * 2;
@@ -1611,6 +1755,7 @@ const BUILD = '2026-11-07-lobby1';
   function drawPipes() {
     cx.save();
     for (const p of pipes) {
+      if (p.water) { drawWaterPipe(cx, p, G, t, speed, lastDt); continue; }
       const top = p.cy - p.gap / 2, bot = p.cy + p.gap / 2;
       neonRect(p.x, -10, PW, top - CAP + 10, p.col);
       neonRect(p.x - 6, top - CAP, PW + 12, CAP, p.col);
@@ -1628,6 +1773,69 @@ const BUILD = '2026-11-07-lobby1';
     cx.save(); cx.translate(BX, bird.y); cx.rotate(bird.rot);
     curSkin().draw(cx, t, Math.sin(bird.wing), state === 'dead');
     cx.restore();
+    drawWetFx(cx, BX, bird.y, wet);
+  }
+
+  /* ---------- water pipes (same look on every map) ---------- */
+  function waterRect(c, x, y, w, h) {
+    if (h <= 0) return;
+    c.fillStyle = 'rgba(3,26,44,.9)'; c.fillRect(x, y, w, h);
+    c.strokeStyle = '#3dd8ff'; c.lineWidth = 3 + snareP * 1.5; c.shadowColor = '#3dd8ff'; c.shadowBlur = 18 + snareP * 24;
+    c.strokeRect(x + 1.5, y + 1.5, w - 3, h - 3);
+    c.shadowBlur = 0; c.globalAlpha = 0.35; c.lineWidth = 2;
+    c.beginPath(); c.moveTo(x + 10, y + 6); c.lineTo(x + 10, y + h - 6); c.stroke();
+    c.globalAlpha = 1;
+  }
+  function drawWaterPipe(c, p, groundY, tt, scroll, dt) {
+    const top = p.cy - p.gap / 2, bot = p.cy + p.gap / 2;
+    c.save();
+    waterRect(c, p.x, -10, PW, top - CAP + 10); waterRect(c, p.x - 6, top - CAP, PW + 12, CAP);
+    waterRect(c, p.x - 6, bot, PW + 12, CAP); waterRect(c, p.x, bot + CAP, PW, groundY - bot - CAP + 4);
+    // rippling water inside the upper tube
+    c.globalAlpha = .35; c.strokeStyle = '#9fe8ff'; c.lineWidth = 1.2;
+    for (let y = 10; y < top - CAP; y += 26) {
+      c.beginPath();
+      for (let x = 0; x <= PW - 12; x += 4) { const yy = y + Math.sin(x * .25 + tt * 4 + y) * 2; x ? c.lineTo(p.x + 6 + x, yy) : c.moveTo(p.x + 6 + x, yy); }
+      c.stroke();
+    }
+    c.globalAlpha = 1;
+    // waterfall through the whole gap
+    c.globalCompositeOperation = 'lighter';
+    const g = c.createLinearGradient(0, top, 0, bot);
+    g.addColorStop(0, 'rgba(61,216,255,.55)'); g.addColorStop(1, 'rgba(61,216,255,.22)');
+    c.fillStyle = g; c.fillRect(p.x + 4, top, PW - 8, p.gap);
+    c.strokeStyle = 'rgba(200,245,255,.85)'; c.shadowColor = '#3dd8ff'; c.shadowBlur = 10; c.lineWidth = 2;
+    for (let i = 0; i < 6; i++) {
+      const lx = p.x + 8 + i * (PW - 16) / 5 + Math.sin(tt * 6 + i) * 1.5;
+      c.setLineDash([14 + (i % 3) * 6, 10]); c.lineDashOffset = -(tt * 520 + i * 17);
+      c.beginPath(); c.moveTo(lx, top); c.lineTo(lx, bot); c.stroke();
+    }
+    c.setLineDash([]); c.shadowBlur = 0;
+    const m = c.createRadialGradient(p.x + PW / 2, bot, 2, p.x + PW / 2, bot, PW * .8);
+    m.addColorStop(0, 'rgba(160,235,255,.5)'); m.addColorStop(1, 'rgba(0,0,0,0)');
+    c.fillStyle = m; c.fillRect(p.x - PW * .4, bot - PW * .8, PW * 1.8, PW * 1.2);
+    // splash droplets bouncing off the lower cap
+    p.drops = p.drops || [];
+    if (dt > 0 && !reduce && Math.random() < 0.7) p.drops.push({ x: p.x + 6 + Math.random() * (PW - 12), y: bot - 2, vx: (Math.random() - .5) * 120, vy: -80 - Math.random() * 140, life: .5 });
+    c.globalCompositeOperation = 'source-over'; c.fillStyle = '#bff4ff';
+    for (const d of p.drops) {
+      d.x += (d.vx - scroll) * dt; d.vy += 900 * dt; d.y += d.vy * dt; d.life -= dt;
+      c.globalAlpha = Math.max(0, d.life * 2); c.beginPath(); c.arc(d.x, Math.min(d.y, bot - 1), 1.6, 0, TAU); c.fill();
+    }
+    p.drops = p.drops.filter(d => d.life > 0);
+    c.restore();
+  }
+  // blue sheen, countdown ring and label while the bird is wet
+  function drawWetFx(c, x, y, w) {
+    if (w <= 0) return;
+    c.save(); c.globalCompositeOperation = 'lighter';
+    const g = c.createRadialGradient(x, y, 4, x, y, 34); g.addColorStop(0, 'rgba(61,216,255,.45)'); g.addColorStop(1, 'rgba(0,0,0,0)');
+    c.fillStyle = g; c.beginPath(); c.arc(x, y, 34, 0, TAU); c.fill(); c.restore();
+    c.save(); c.strokeStyle = '#3dd8ff'; c.shadowColor = '#3dd8ff'; c.shadowBlur = 12; c.lineWidth = 3;
+    c.beginPath(); c.arc(x, y, 26, -Math.PI / 2, -Math.PI / 2 + TAU * (w / WET_TIME)); c.stroke();
+    c.shadowBlur = 8; c.fillStyle = '#3dd8ff'; c.font = '700 13px "Chakra Petch", sans-serif'; c.textAlign = 'center';
+    c.fillText(`WET ${w.toFixed(1)}s`, x, y - 34);
+    c.restore();
   }
 
   /* ---------- maps (neon style; pipes keep exact size, gap and speed) ---------- */
@@ -1922,6 +2130,7 @@ const BUILD = '2026-11-07-lobby1';
   function drawPipeSet(c, m, list, groundY, tt) {
     const f = pipeStyle(m);
     for (const p of list) {
+      if (p.water) { drawWaterPipe(c, p, groundY, tt, list === pipes ? speed : 0, list === pipes ? lastDt : 0); continue; }
       const col = m.lime ? p.col : m.pipes[p.idx % 2];
       const top = p.cy - p.gap / 2, bot = p.cy + p.gap / 2;
       f(c, p.x, -10, PW, top - CAP + 10, col, tt); f(c, p.x - 6, top - CAP, PW + 12, CAP, col, tt);
@@ -2173,6 +2382,8 @@ const BUILD = '2026-11-07-lobby1';
     kickP *= Math.pow(0.0015, dt); snareP *= Math.pow(0.004, dt);
     update(dt); draw();
     if (!modal.hidden && !$('mShop').hidden) drawShop(dt, t);
+    if (!modal.hidden && !$('mNews').hidden) drawNewsDemo(dt);
+    if (newsState === 'pending' && modal.hidden && state === 'ready') showNews();
     requestAnimationFrame(frame);
   }
 
