@@ -21,6 +21,7 @@
   --cyan:#21f3ff;
   --lime:#b6ff3b;
   --dim:#9a8bbd;
+  --gold:#ffd23b;
   --display:"Monoton","Impact",sans-serif;
   --ui:"Chakra Petch","Segoe UI",system-ui,sans-serif;
   --top:env(safe-area-inset-top,0px);
@@ -140,6 +141,32 @@ h2{margin:0;font-family:var(--display);font-weight:400;font-size:clamp(40px,10vw
   pointer-events:none;text-align:center;width:min(90vw,420px)}
 .tourhud b{font-size:15px;letter-spacing:.12em;text-transform:uppercase;color:var(--gold);text-shadow:0 0 10px rgba(255,210,59,.7)}
 .tourhud span{font-size:22px;font-weight:700;color:var(--lime);text-shadow:0 0 12px rgba(182,255,59,.7)}
+.tourhud span:empty{display:none}
+.tourboard{display:grid;grid-template-columns:1fr auto 1fr;gap:8px;align-items:center;width:100%;padding:8px 10px;border-radius:12px;
+  background:rgba(7,4,15,.72);border:1px solid rgba(255,210,59,.5);font-size:13px;font-variant-numeric:tabular-nums}
+.tourboard:empty{display:none}
+.tourboard .p{display:flex;flex-direction:column;gap:2px;min-width:0}
+.tourboard .p:last-child{text-align:right}
+.tourboard .nm{font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tourboard .me .nm{color:var(--cyan)}
+.tourboard .op .nm{color:var(--pink)}
+.tourboard .sc{font-size:18px;font-weight:700;color:#fff}
+.tourboard .hs{letter-spacing:1px;font-size:11px;color:#ffb3ec}
+.tourboard .me .hs{color:#9ff8ff}
+.tourboard .fly{font-size:11px;color:var(--lime)}
+.tourboard .vsx{color:var(--dim);font-weight:700}
+.tres{display:grid;grid-template-columns:1fr auto 1fr;gap:10px;align-items:center;padding:14px;border-radius:14px;background:rgba(255,255,255,.04)}
+.tres .p{display:flex;flex-direction:column;gap:4px;min-width:0;text-align:center}
+.tres .nm{font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tres .sc{font-size:26px;font-weight:700;font-variant-numeric:tabular-nums}
+.tres .win .nm,.tres .win .sc{color:var(--lime);text-shadow:0 0 12px rgba(182,255,59,.6)}
+.tres .lose .nm,.tres .lose .sc{color:#ff6b88}
+.tres .badge{font-size:11px;font-weight:700;letter-spacing:.18em}
+.tcount{font:700 54px/1 var(--ui);text-align:center;color:var(--gold);text-shadow:0 0 18px rgba(255,210,59,.8);font-variant-numeric:tabular-nums}
+.tpair .ok{color:var(--lime);font-weight:700}
+.tpair .ko{color:#ff6b88;text-decoration:line-through}
+.thist{display:flex;flex-direction:column;gap:4px}
+.thist summary{cursor:pointer;color:var(--dim);font-size:13px}
 .tourbody{display:flex;flex-direction:column;gap:12px}
 .tstep{margin:0;font-size:11px;font-weight:700;letter-spacing:.24em;text-transform:uppercase;color:var(--gold)}
 .topts{display:flex;flex-wrap:wrap;gap:8px}
@@ -282,7 +309,7 @@ input:focus{border-color:var(--pink);box-shadow:0 0 14px rgba(255,43,214,.4)}
   <canvas id="c" aria-label="Spelplan för Neon Wing"></canvas>
   <div id="score" class="score" hidden>0</div>
   <button id="who" class="chip who" type="button" hidden>Välj namn</button>
-  <div id="tourHud" class="tourhud" hidden><b id="tourHudA"></b><span id="tourHudB"></span></div>
+  <div id="tourHud" class="tourhud" hidden><b id="tourHudA"></b><span id="tourHudB"></span><div id="tourHudC" class="tourboard"></div></div>
   <button id="mute" class="chip mute" type="button">Sounds: on</button>
   <button id="music" class="chip mute music" type="button">Music: on</button>
 
@@ -465,7 +492,7 @@ const LB_KEY = 'sb_publishable_quKPe6oSHKYU431WblJnog_5ksg9cT2';   // den publik
 /* ===================================================================== */
 
 /* Versionsnummer: ÄNDRA vid varje uppdatering, så laddar alla öppna spel om sig automatiskt */
-const BUILD = '2026-11-09-tour1';
+const BUILD = '2026-11-09-tour2';
 
 (() => {
   const $ = id => document.getElementById(id);
@@ -1549,13 +1576,17 @@ const BUILD = '2026-11-09-tour1';
 
   /* =====================================================================
      TOURNAMENTS – all rules live on the server (nw_t_* functions);
-     the game only shows the state and plays lives with the server's seed.
+     the game shows the state, drives players straight into their matches
+     and plays lives with the server's seed.
      ===================================================================== */
   const escH = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-  let tourId = null, tourStatus = null, tourCode = null, tourState = null, tourScreen = 'join';
-  let tourPoll = 0, tourClockOff = 0, tourBusy = false, tourMsg = '', tourConfirm = '';
-  let tourLife = null;      // { mid, cfg, life, need, opp } while a tournament life is being played
-  let tourShown = null;     // the match last shown on the match screen, for the result screen
+  let tourId = null, tourStatus = null, tourCode = null, tourState = null, tourScreen = 'join', tourResultId = null;
+  let tourPoll = 0, tourClockOff = 0, tourBusy = false, tourMsg = '', tourConfirm = '', tourLastKey = '';
+  let tourLife = null;              // { mid, cfg, life, need, opp } while a tournament life is being played
+  const tourSeen = {};              // results already shown, by match id
+  const tourAuto = {};              // matches we already auto-started
+  let tourCountdown = null;         // { mid, until }
+  let liveSent = -1;
   let rngState = 1;
   // mulberry32: the same seed gives both players the exact same pipes
   function seededRandom() {
@@ -1571,16 +1602,26 @@ const BUILD = '2026-11-09-tour1';
   }
   const twiz = { step: 1, plays: true, lives: 4, minutes: 10, diff: 'Normal', water: true, waterAfter: 40 };
   const tourActive = () => !!tourId && (tourStatus === 'open' || tourStatus === 'running');
-  const myMatch = () => tourState && tourState.matches ? tourState.matches.find(m => m.mine) : null;
+  const curMatches = () => tourState && tourState.matches ? tourState.matches.filter(m => m.round === tourState.round) : [];
+  const myMatch = () => curMatches().find(m => m.mine) || null;
+  const matchById = id => tourState && tourState.matches ? tourState.matches.find(m => m.id === id) : null;
   const meRow = () => tourState && tourState.players ? tourState.players.find(p => p.me) : null;
+  const lastMineDone = () => tourState && tourState.matches ? tourState.matches.filter(m => m.mine && m.b && m.winner).sort((x, y) => y.round - x.round)[0] : null;
   const fmt2 = v => (Math.round(Number(v || 0) * 100) / 100).toFixed(2);
-  function roundLabel() {
-    if (!tourState || !tourState.matches) return '';
-    const n = tourState.matches.reduce((a, m) => a + (m.b ? 2 : 1), 0);
-    return n <= 2 ? 'Final' : n <= 4 ? 'Semifinal' : n <= 8 ? 'Quarterfinal' : 'Round ' + tourState.round;
+  const sideOf = mm => {   // my view of a match
+    const my = mm.me_a ? mm.a_lives : mm.b_lives, op = mm.me_a ? mm.b_lives : mm.a_lives;
+    return { my, op, myT: Number(mm.me_a ? mm.a_total : mm.b_total), opT: Number(mm.me_a ? mm.b_total : mm.a_total),
+      myLive: mm.me_a ? mm.a_live : mm.b_live, opLive: mm.me_a ? mm.b_live : mm.a_live,
+      opn: mm.me_a ? mm.b : mm.a, opFly: mm.me_a ? mm.b_playing : mm.a_playing, need: mm.need };
+  };
+  const hearts = (need, used) => '❤'.repeat(Math.max(0, need - used)) + '○'.repeat(Math.min(need, used));
+  function roundLabel(list) {
+    list = list || curMatches();
+    const n = list.reduce((a, m) => a + (m.b ? 2 : 1), 0);
+    return n <= 2 ? 'Final' : n <= 4 ? 'Semifinal' : n <= 8 ? 'Quarterfinal' : 'Round ' + (list[0] ? list[0].round : '');
   }
   function tourHome() {
-    if (!tourActive()) return 'join';
+    if (!tourActive()) return tourStatus === 'done' ? 'bracket' : 'join';
     if (tourStatus === 'open') return tourState && tourState.is_host ? 'manage' : 'lobby';
     return 'bracket';
   }
@@ -1588,22 +1629,30 @@ const BUILD = '2026-11-09-tour1';
     const b = $('tourBtn');
     b.hidden = !lbOn;
     const mm = myMatch(), ready = tourStatus === 'running' && mm && !mm.winner && mm.b;
-    b.textContent = !tourActive() ? '🏆 Join Tournament' : ready ? '⚔ Your match is ready!' : '🏆 Back to tournament';
+    b.textContent = !tourActive() ? '🏆 Join Tournament' : ready ? '⚔ Your match is on!' : '🏆 Back to tournament';
     b.classList.toggle('ready', !!ready);
     $('adminBtn').hidden = !(lbOn && player && wallet.admin);
   }
-  function showTourHud(a, bTxt) { $('tourHud').hidden = false; $('tourHudA').textContent = a; $('tourHudB').textContent = bTxt || ''; }
-  function hideTourHud() { $('tourHud').hidden = true; }
+  function showTourHud(a, bTxt) { $('tourHud').hidden = false; $('tourHudA').textContent = a; $('tourHudB').textContent = bTxt || ''; drawTourBoard(); }
+  function hideTourHud() { $('tourHud').hidden = true; $('tourHudC').innerHTML = ''; }
+  // live scoreboard at the top while a tournament life is played
+  function drawTourBoard() {
+    const el = $('tourHudC'); if (!tourLife) { el.innerHTML = ''; return; }
+    const mm = matchById(tourLife.mid); if (!mm) { el.innerHTML = ''; return; }
+    const s = sideOf(mm);
+    const mine = s.myT + (state === 'play' || state === 'dead' ? score : 0);
+    const theirs = s.opT + (s.opFly && s.opLive != null ? Number(s.opLive) : 0);
+    const myUsed = s.my.length + (tourLife ? 1 : 0);
+    el.innerHTML = `<div class="p me"><span class="nm">YOU</span><span class="sc">${fmt2(mine)}</span><span class="hs">${hearts(s.need, Math.min(s.need, myUsed))}</span></div>
+      <span class="vsx">VS</span>
+      <div class="p op"><span class="nm">${escH(s.opn)}</span><span class="sc">${fmt2(theirs)}</span><span class="hs">${hearts(s.need, Math.min(s.need, s.op.length + (s.opFly ? 1 : 0)))}</span>${s.opFly ? '<span class="fly">● flying now</span>' : ''}</div>`;
+  }
 
-  function tourOpen(screen) {
-    tourScreen = screen || tourHome(); tourMsg = ''; tourConfirm = '';
-    openModal('mTour'); renderTour();
-    clearInterval(tourPoll);
-    tourPoll = setInterval(() => {
-      if (modal.hidden || $('mTour').hidden) { clearInterval(tourPoll); tourPoll = 0; return; }
-      if (['lobby', 'manage', 'bracket', 'match'].includes(tourScreen)) pollTour();
-    }, 2000);
-    if (['lobby', 'manage', 'bracket', 'match'].includes(tourScreen)) pollTour();
+  function tourOpen(screen, resultId) {
+    tourScreen = screen || tourHome(); tourMsg = ''; tourConfirm = ''; tourLastKey = '';
+    if (resultId) tourResultId = resultId;
+    openModal('mTour'); renderTour(true);
+    if (['lobby', 'manage', 'bracket', 'match', 'pairings'].includes(tourScreen)) pollTour();
   }
   async function pollTour() {
     if (!tourId || !player || tourBusy) return;
@@ -1612,17 +1661,35 @@ const BUILD = '2026-11-09-tour1';
       if (!st || st.error) return;
       tourState = st; tourStatus = st.status; tourCode = st.code;
       tourClockOff = Date.parse(st.now) - Date.now();
-      const mm = myMatch(), me = meRow();
-      // move the player along when things change on the server
       if (tourScreen === 'lobby' && st.status !== 'open') tourScreen = 'bracket';
-      if (tourScreen === 'match') {
-        const gone = !mm || (tourShown && mm.id !== tourShown.id) || mm.winner || (me && me.out) || st.status !== 'running';
-        if (gone && tourShown) tourScreen = 'result';
-        else if (mm && !mm.winner) tourShown = { id: mm.id, opp: mm.me_a ? mm.b : mm.a, my: mm.me_a ? mm.a_total : mm.b_total, op: mm.me_a ? mm.b_total : mm.a_total };
-      }
       updateTourButtons();
+      if (tourLife) drawTourBoard();
+      tourDrive();
       if (!modal.hidden && !$('mTour').hidden && !tourBusy && tourScreen !== 'wizard' && tourScreen !== 'join') renderTour();
     } catch (e) {}
+  }
+  // moves the player along: result -> pairings (countdown) -> match -> waiting -> next round
+  function tourDrive() {
+    const st = tourState; if (!st || !player) return;
+    if (tourLife || state === 'play') return;                               // never interrupt a run
+    if (!modal.hidden && $('mTour').hidden) return;                         // another window is open (shop, leaderboard…)
+    const inTour = !modal.hidden && !$('mTour').hidden;
+    if (inTour && ['wizard', 'join', 'manage'].includes(tourScreen)) return;
+    const last = lastMineDone();
+    if (last && !tourSeen[last.id]) { tourSeen[last.id] = true; tourOpen('result', last.id); return; }
+    if (inTour && tourScreen === 'result') return;                          // let them read it
+    const mm = myMatch(), me = meRow();
+    if (st.status === 'running' && me && !me.out && mm && mm.b && !mm.winner) {
+      const used = sideOf(mm).my.length;
+      if (used === 0 && !tourAuto[mm.id]) {
+        if (!tourCountdown || tourCountdown.mid !== mm.id) tourCountdown = { mid: mm.id, until: Date.now() + 5000 };
+        if (!(inTour && tourScreen === 'pairings')) tourOpen('pairings');
+        return;
+      }
+      if (!(inTour && tourScreen === 'match')) tourOpen('match');
+      return;
+    }
+    if (inTour && (tourScreen === 'pairings' || tourScreen === 'match')) { tourScreen = 'bracket'; tourLastKey = ''; }
   }
   async function loadMyTour() {
     if (!lbOn || !player) { updateTourButtons(); return; }
@@ -1630,9 +1697,10 @@ const BUILD = '2026-11-09-tour1';
       const r = await rpc('nw_t_mine', { p_id: player.id, p_secret: player.secret });
       if (r && r.id) {
         tourId = r.id; tourCode = r.code; tourStatus = r.status;
-        await pollTour();
-        const mm = myMatch(), me = meRow();
-        if (r.status === 'running' && me && !me.out && mm && !mm.winner && mm.b && modal.hidden && state === 'ready') tourOpen('bracket');
+        // results from before this page load are not shown again
+        const st = await rpc('nw_t_state', { p_id: player.id, p_secret: player.secret, p_tid: tourId });
+        if (st && !st.error) { tourState = st; tourStatus = st.status; (st.matches || []).forEach(m => { if (m.winner) tourSeen[m.id] = true; }); }
+        if (tourStatus === 'running') tourDrive();
       }
     } catch (e) {}
     updateTourButtons();
@@ -1645,17 +1713,24 @@ const BUILD = '2026-11-09-tour1';
       <dt>Time per match</dt><dd>${escH(s.minutes)} min</dd>
       <dt>Difficulty</dt><dd>${escH(s.difficulty || s.diff)}</dd>
       <dt>Water pipes</dt><dd>${s.water ? 'On, after ' + escH(s.water_after != null ? s.water_after : s.waterAfter) + ' pts' : 'Off'}</dd>
-      <dt>Final</dt><dd>10 lives, no time limit</dd>
+      <dt>Final</dt><dd>10 lives, no time limit*</dd>
       <dt>Prize</dt><dd>500 ◆ + 👑</dd>
-    </dl>`;
+    </dl><p class="tnote">*With only 2 players the whole tournament is one match with the lives you chose.</p>`;
   }
-  function playersHtml(st, kick) {
-    return `<ul class="tlist">${(st.players || []).map(p => `<li class="${p.me ? 'me' : ''} ${p.out ? 'out' : ''}">${escH(p.name)}${kick && !p.me ? `<button class="tkick" type="button" data-kick="${escH(p.name)}">✕ Kick</button>` : ''}</li>`).join('')}</ul>`;
+  function pairHtml(m) {
+    if (!m.b) return `<div class="tpair ${m.mine ? 'mine' : ''}"><span class="ok">${escH(m.a)}</span><span class="vs">BYE</span><span>—</span></div>`;
+    const cls = n => m.winner ? (m.winner === n ? 'ok' : 'ko') : '';
+    const mid = m.winner ? `${fmt2(m.a_total)} – ${fmt2(m.b_total)}` : (m.a_lives.length || m.b_lives.length || m.a_playing || m.b_playing) ? 'playing…' : 'vs';
+    return `<div class="tpair ${m.mine ? 'mine' : ''}"><span class="${cls(m.a)}">${m.winner === m.a ? '✓ ' : ''}${escH(m.a)}</span><span class="vs">${mid}</span><span class="${cls(m.b)}">${escH(m.b)}${m.winner === m.b ? ' ✓' : ''}</span></div>`;
   }
   const msgHtml = () => tourMsg ? `<p class="err">${escH(tourMsg)}</p>` : '';
 
-  function renderTour() {
+  function renderTour(force) {
     const box = $('tourBody'), st = tourState;
+    // only redraw when something changed, so buttons never jump under your finger
+    const key = tourScreen + '|' + tourMsg + '|' + tourConfirm + '|' + tourBusy + '|' + (tourScreen === 'wizard' ? JSON.stringify(twiz) : '') + '|' + (st ? JSON.stringify(st.players) + JSON.stringify(st.matches) + st.status : '');
+    if (!force && key === tourLastKey) { tickTourTexts(); return; }
+    tourLastKey = key;
     let h = '';
     if (tourScreen === 'join') {
       h = `<p class="tstep">Tournament</p><h3>Join Tournament</h3>
@@ -1670,7 +1745,7 @@ const BUILD = '2026-11-09-tour1';
       const opt = (k, v, label, small) => `<button class="topt" type="button" data-k="${k}" data-v="${v}" aria-pressed="${String(twiz[k]) === String(v)}">${label}${small ? `<small>${small}</small>` : ''}</button>`;
       let body = '';
       if (s === 1) body = `<h3>Do you want to play in this tournament?</h3><div class="topts">${opt('plays', true, "Yes, I'll play")}${opt('plays', false, 'No, just host')}</div>`;
-      if (s === 2) body = `<h3>How many lives should each player have per match?</h3><div class="topts">${[1, 2, 3, 4, 5, 6, 8, 10].map(n => opt('lives', n, n)).join('')}</div><p class="tnote">The final always has 10 lives.</p>`;
+      if (s === 2) body = `<h3>How many lives should each player have per match?</h3><div class="topts">${[1, 2, 3, 4, 5, 6, 8, 10].map(n => opt('lives', n, n)).join('')}</div><p class="tnote">The final has 10 lives (if there was a round before it).</p>`;
       if (s === 3) body = `<h3>How long does each match last?</h3><div class="topts">${[5, 10, 15, 20].map(n => opt('minutes', n, n + ' min')).join('')}</div><p class="tnote">The final has no time limit.</p>`;
       if (s === 4) body = `<h3>Difficulty?</h3><div class="topts" style="flex-direction:column">${opt('diff', 'Easy', '🟢 Easy', 'Slow speed and big gaps the whole time')}${opt('diff', 'Normal', '🟡 Normal', 'Like the normal game, gets harder with points')}${opt('diff', 'Hard', '🔴 Hard', 'Full speed and small gaps from the start')}</div>`;
       if (s === 5) body = `<h3>Water pipes?</h3><div class="topts">${opt('water', false, 'Off')}${opt('water', true, 'On')}</div>
@@ -1679,97 +1754,118 @@ const BUILD = '2026-11-09-tour1';
       h = `<p class="tstep">Create tournament · ${s <= 5 ? 'Step ' + s + '/5' : 'Summary'}</p>${body}${msgHtml()}
         <div class="row"><button class="btn ghost small" type="button" id="wBack">${s === 1 ? 'Cancel' : '← Back'}</button>
         <button class="btn small" type="button" id="wNext" style="background:var(--gold)" ${tourBusy ? 'disabled' : ''}>${s === 6 ? 'Create ✓' : 'Next →'}</button></div>`;
+    } else if (tourScreen === 'result') {
+      const m = matchById(tourResultId) || lastMineDone();
+      if (!m) { tourScreen = 'bracket'; return renderTour(true); }
+      const s = sideOf(m), iWon = m.winner && player && m.winner.toLowerCase() === player.name.toLowerCase();
+      const champ = st && st.status === 'done' && st.champion && player && st.champion.toLowerCase() === player.name.toLowerCase();
+      h = `${champ ? `<div class="tcrown">👑</div><div class="tbig win">Champion</div><p class="mtext" style="text-align:center">You won the whole tournament! +500 neon-coins.</p>`
+          : `<div class="tbig ${iWon ? 'win' : 'lose'}">${iWon ? 'You win!' : 'You lost'}</div>`}
+        <div class="tres">
+          <div class="p ${iWon ? 'win' : 'lose'}"><span class="badge">${iWon ? 'WINNER' : 'OUT'}</span><span class="nm">${escH(player ? player.name : 'You')}</span><span class="sc">${fmt2(s.myT)}</span></div>
+          <span class="vsx">VS</span>
+          <div class="p ${iWon ? 'lose' : 'win'}"><span class="badge">${iWon ? 'OUT' : 'WINNER'}</span><span class="nm">${escH(s.opn)}</span><span class="sc">${fmt2(s.opT)}</span></div>
+        </div>
+        <p class="tnote" style="text-align:center">${iWon && !champ ? 'You go through to the next round.' : !iWon ? 'You are out of the tournament. You can keep watching.' : ''}</p>
+        <button class="btn" type="button" id="tResOk" style="background:var(--gold)">Continue</button>`;
+      if (champ) syncWallet();
     } else if (!st) {
       h = `<p class="twait">Loading tournament…</p><button class="btn ghost" type="button" data-tclose>Close</button>`;
     } else if (st.status === 'cancelled') {
       h = `<h3>Tournament cancelled</h3><p class="mtext">The host cancelled tournament ${escH(st.code)}.</p><button class="btn" type="button" id="tForget">OK</button>`;
     } else if (tourScreen === 'lobby') {
       h = `<p class="tstep">Waiting room · ${escH(st.code)}</p><h3>Waiting for ${escH(st.host)} to start…</h3>
+        <p class="twait">You'll go straight into your match when it starts.</p>
         ${settingsHtml(st)}
-        <p class="tstep">${st.players.length} player${st.players.length === 1 ? '' : 's'} joined</p>${playersHtml(st, false)}
-        <p class="twait">Waiting…</p>${msgHtml()}
-        <div class="row"><button class="btn ghost small" type="button" id="tLeave">Leave</button><button class="btn small" type="button" data-tclose>Close</button></div>`;
+        <p class="tstep">${st.players.length} player${st.players.length === 1 ? '' : 's'} joined</p>
+        <ul class="tlist">${st.players.map(p => `<li class="${p.me ? 'me' : ''}">${escH(p.name)}</li>`).join('')}</ul>
+        ${msgHtml()}
+        <div class="row"><button class="btn ghost small" type="button" id="tLeave">${tourConfirm === 'leave' ? 'Tap again to leave' : 'Leave'}</button><button class="btn small" type="button" data-tclose>Close</button></div>`;
     } else if (tourScreen === 'manage') {
       const open = st.status === 'open', running = st.status === 'running';
       h = `<p class="tstep">👑 Admin · ${open ? 'open for players' : running ? roundLabel() + ' running' : 'finished'}</p>
         <h3>Tournament code</h3><div class="tcode">${escH(st.code)}</div>
-        <p class="tnote">Share the code. Players press Join Tournament and type it in.</p>
-        ${settingsHtml(st)}
-        <p class="tstep">${st.players.length} player${st.players.length === 1 ? '' : 's'}</p>${playersHtml(st, open)}
         ${msgHtml()}
-        ${open ? `<button class="btn" type="button" id="tStart" style="background:var(--gold)" ${st.players.length < 2 ? 'disabled' : ''}>▶ Start tournament</button>` : ''}
-        ${!open ? `<button class="btn" type="button" data-tgo="bracket">View bracket</button>` : ''}
+        ${open ? `<button class="btn" type="button" id="tStart" style="background:var(--gold)" ${st.players.length < 2 ? 'disabled' : ''}>▶ Start tournament (${st.players.length} players)</button>` : ''}
+        ${!open ? `<button class="btn" type="button" data-tgo="bracket" style="background:var(--gold)">View matches</button>` : ''}
+        <p class="tnote">Share the code. Players press Join Tournament and type it in.</p>
+        <p class="tstep">Players</p>
+        <ul class="tlist">${st.players.map(p => `<li class="${p.me ? 'me' : ''} ${p.out ? 'out' : ''}"><span>${escH(p.name)}</span>${open && !p.me
+          ? `<button class="tkick" type="button" data-kick="${escH(p.name)}">${tourConfirm === 'kick:' + p.name ? 'Tap again to kick' : '✕'}</button>` : ''}</li>`).join('')}</ul>
+        ${settingsHtml(st)}
         ${running ? `<button class="btn ghost small" type="button" id="tForce">${tourConfirm === 'force' ? 'Tap again to end this round now' : 'Force next round'}</button>` : ''}
         ${open || running ? `<button class="btn ghost small" type="button" id="tCancel">${tourConfirm === 'cancel' ? 'Tap again to cancel the tournament' : 'Cancel tournament'}</button>` : ''}
         <button class="btn ghost small" type="button" data-tclose>Close</button>`;
+    } else if (tourScreen === 'pairings') {
+      const mm = myMatch();
+      if (!mm || !mm.b) { tourScreen = 'bracket'; return renderTour(true); }
+      const s = sideOf(mm);
+      h = `<p class="tstep">${escH(st.code)} · ${roundLabel()}</p><h3>${roundLabel()}: the draw is in!</h3>
+        <div class="tres"><div class="p"><span class="badge">YOU</span><span class="nm" style="color:var(--cyan)">${escH(player.name)}</span></div>
+          <span class="vsx">VS</span><div class="p"><span class="badge">OPPONENT</span><span class="nm" style="color:var(--pink)">${escH(s.opn)}</span></div></div>
+        <p class="tnote" style="text-align:center">${s.need} lives each${mm.deadline ? ' · ' + escH(st.minutes) + ' min' : ' · no time limit'}. Same pipes for both of you.</p>
+        <div class="tcount" id="tCount">5</div>
+        <p class="tnote" style="text-align:center">Your match starts automatically…</p>
+        <button class="btn" type="button" id="tGoNow" style="background:var(--gold)">Start now</button>
+        <p class="tstep">All matches</p>${curMatches().map(pairHtml).join('')}`;
+    } else if (tourScreen === 'match') {
+      const mm = myMatch();
+      if (!mm || !mm.b) { tourScreen = 'bracket'; return renderTour(true); }
+      const s = sideOf(mm), done = s.my.length >= s.need;
+      const canPlay = !done && !mm.winner && tourTimeLeft(mm) !== 0;
+      h = `<div class="row" style="align-items:center"><p class="tstep">${roundLabel()} · ${s.need} lives</p><span class="ttimer" id="tTimer">${tourTimerText(mm)}</span></div>
+        <div class="tvs">
+          <div class="tside mine"><span class="n">YOU</span><span class="t">${fmt2(s.myT)}</span><span class="h">${hearts(s.need, s.my.length)}</span></div>
+          <div class="tmid">VS</div>
+          <div class="tside opp"><span class="n">${escH(s.opn)}</span><span class="t">${fmt2(s.opT + (s.opFly && s.opLive != null ? Number(s.opLive) : 0))}</span><span class="h">${hearts(s.need, s.op.length)}</span>${s.opFly ? '<span class="live">● flying now</span>' : ''}</div>
+        </div>
+        <div class="tlives">${s.my.length ? s.my.map((v, i) => `<span>Life ${i + 1}: ${fmt2(v)}</span>`).join('') : '<span>No lives played yet</span>'}</div>
+        ${msgHtml()}
+        ${canPlay ? `<button class="btn" type="button" id="tPlay" style="background:var(--gold)" ${tourBusy ? 'disabled' : ''}>▶ Play life ${s.my.length + 1} of ${s.need}</button>`
+          : `<p class="twait">${done ? 'All your lives are used.' : "Time's up!"} Waiting for ${escH(s.opn)} to finish…</p>`}
+        <p class="tnote">Score = pipes + how far you got to the next pipe. When both of you have used all lives, the match ends by itself.</p>
+        <button class="btn ghost small" type="button" data-tgo="bracket">All matches</button>`;
     } else if (tourScreen === 'bracket') {
-      const mm = myMatch(), me = meRow();
-      const pairs = (st.matches || []).map(m => {
-        const cls = n => m.winner ? (m.winner === n ? 'w' : 'l') : '';
-        return `<div class="tpair ${m.mine ? 'mine' : ''}"><span class="${cls(m.a)}">${escH(m.a)}</span>
-          <span class="vs">${!m.b ? 'BYE' : (m.a_lives.length || m.b_lives.length) ? fmt2(m.a_total) + ' – ' + fmt2(m.b_total) : 'vs'}</span>
-          <span class="${cls(m.b)}">${m.b ? escH(m.b) : '—'}</span></div>`;
-      }).join('');
+      const mm = myMatch(), me = meRow(), cur = curMatches();
+      const older = (st.matches || []).filter(m => m.round < st.round && m.b);
+      const rounds = [...new Set(older.map(m => m.round))].sort((a, b) => b - a);
       let act = '';
       if (st.status === 'done') act = `<div class="tcrown">👑</div><p class="mtext" style="text-align:center">Champion: <b style="color:var(--gold)">${escH(st.champion || '—')}</b> (+500 ◆)</p><button class="btn" type="button" id="tForget">Done</button>`;
       else if (!st.joined) act = `<p class="mtext">You're hosting this tournament.</p>`;
       else if (me && me.out) act = `<p class="mtext">You're out of the tournament. You can keep watching here.</p>`;
-      else if (mm && !mm.b) act = `<p class="mtext">You got a <b>bye</b> this round and go straight through. Wait for the next round.</p><p class="twait">Waiting for the other matches…</p>`;
-      else if (mm && !mm.winner) act = `<button class="btn" type="button" data-tgo="match" style="background:var(--gold)">⚔ Play your match</button>`;
-      else act = `<p class="twait">Waiting for the other matches…</p>`;
-      h = `<p class="tstep">${escH(st.code)} · ${st.status === 'done' ? 'Finished' : roundLabel()}</p>
-        <h3>${st.status === 'done' ? 'Tournament finished' : roundLabel()}</h3>${pairs}${act}
+      else if (mm && !mm.b) act = `<p class="mtext">You got a <b>bye</b> this round and go straight through.</p><p class="twait">Waiting for the other matches to finish…</p>`;
+      else if (mm && !mm.winner) act = `<button class="btn" type="button" data-tgo="match" style="background:var(--gold)">⚔ Go to your match</button>`;
+      else act = `<p class="twait">You won your match! Waiting for the other matches to finish…</p>`;
+      h = `<p class="tstep">${escH(st.code)} · ${st.status === 'done' ? 'Finished' : roundLabel(cur) + ' · ' + cur.filter(m => m.winner).length + '/' + cur.length + ' done'}</p>
+        <h3>${st.status === 'done' ? 'Tournament finished' : roundLabel(cur)}</h3>${cur.map(pairHtml).join('')}${act}
+        ${rounds.map(r => `<details class="thist"><summary>${roundLabel(st.matches.filter(m => m.round === r))} results</summary>${older.filter(m => m.round === r).map(pairHtml).join('')}</details>`).join('')}
         ${st.is_host && st.status !== 'done' ? `<button class="btn ghost small" type="button" data-tgo="manage">👑 Admin</button>` : ''}
         <button class="btn ghost small" type="button" data-tclose>Close</button>`;
-    } else if (tourScreen === 'match') {
-      const mm = myMatch();
-      if (!mm || !mm.b) { tourScreen = 'bracket'; return renderTour(); }
-      const my = mm.me_a ? mm.a_lives : mm.b_lives, op = mm.me_a ? mm.b_lives : mm.a_lives;
-      const myT = mm.me_a ? mm.a_total : mm.b_total, opT = mm.me_a ? mm.b_total : mm.a_total;
-      const opn = mm.me_a ? mm.b : mm.a, opPlaying = mm.me_a ? mm.b_playing : mm.a_playing;
-      const need = mm.need, hearts = used => '❤'.repeat(Math.max(0, need - used)) + '○'.repeat(Math.min(need, used));
-      let left = null;
-      if (mm.deadline) left = Math.max(0, Math.round((Date.parse(mm.deadline) - (Date.now() + tourClockOff)) / 1000));
-      const timeTxt = mm.deadline ? `⏱ ${String(Math.floor(left / 60)).padStart(2, '0')}:${String(left % 60).padStart(2, '0')}` : 'No time limit';
-      const canPlay = my.length < need && (left == null || left > 0) && !mm.winner;
-      tourShown = { id: mm.id, opp: opn, my: myT, op: opT };
-      h = `<div class="row" style="align-items:center"><p class="tstep">${roundLabel()} · ${need} lives</p><span class="ttimer">${timeTxt}</span></div>
-        <div class="tvs">
-          <div class="tside mine"><span class="n">YOU</span><span class="t">${fmt2(myT)}</span><span class="h">${hearts(my.length)}</span></div>
-          <div class="tmid">VS</div>
-          <div class="tside opp"><span class="n">${escH(opn)}</span><span class="t">${fmt2(opT)}</span><span class="h">${hearts(op.length)}</span>${opPlaying ? '<span class="live">● flying now</span>' : ''}</div>
-        </div>
-        <div class="tlives">${my.length ? my.map((v, i) => `<span>Life ${i + 1}: ${fmt2(v)}</span>`).join('') : '<span>No lives played yet</span>'}</div>
-        ${msgHtml()}
-        ${canPlay ? `<button class="btn" type="button" id="tPlay" style="background:var(--gold)" ${tourBusy ? 'disabled' : ''}>▶ Play life ${my.length + 1} of ${need}</button>`
-          : `<p class="twait">${left === 0 ? "Time's up! " : 'All lives used. '}Waiting for ${escH(opn)}…</p>`}
-        <p class="tnote">Same pipes for both of you, and a new layout every life. Score = pipes + how far you got to the next one.</p>
-        <button class="btn ghost small" type="button" data-tgo="bracket">Bracket</button>`;
-    } else if (tourScreen === 'result') {
-      const me = meRow(), sh = tourShown || { opp: '?', my: 0, op: 0 };
-      const champ = st.status === 'done' && st.champion && player && st.champion.toLowerCase() === player.name.toLowerCase();
-      const won = champ || (me && !me.out);
-      h = `${champ ? `<div class="tcrown">👑</div><div class="tbig win">Champion</div><p class="mtext" style="text-align:center">You won the tournament! +500 neon-coins.</p>`
-          : `<div class="tbig ${won ? 'win' : 'lose'}">${won ? 'You win' : 'Knocked out'}</div>`}
-        <p class="mtext" style="text-align:center">vs ${escH(sh.opp)}</p>
-        <button class="btn" type="button" data-tgo="bracket" style="background:var(--gold)">${won && !champ ? 'Next round' : 'See the bracket'}</button>`;
-      if (champ) syncWallet();
     }
     box.innerHTML = h;
     bindTour();
+    tickTourTexts();
+  }
+  function tourTimeLeft(mm) { return mm && mm.deadline ? Math.max(0, Math.round((Date.parse(mm.deadline) - (Date.now() + tourClockOff)) / 1000)) : null; }
+  function tourTimerText(mm) { const left = tourTimeLeft(mm); return left == null ? 'No time limit' : `⏱ ${String(Math.floor(left / 60)).padStart(2, '0')}:${String(left % 60).padStart(2, '0')}`; }
+  // countdown + timer text without redrawing the whole window
+  function tickTourTexts() {
+    const t1 = $('tTimer'); if (t1) t1.textContent = tourTimerText(myMatch());
+    const c = $('tCount');
+    if (c && tourCountdown) {
+      const left = Math.max(0, Math.ceil((tourCountdown.until - Date.now()) / 1000));
+      c.textContent = left;
+      if (left === 0 && !tourBusy && tourScreen === 'pairings' && state !== 'play' && !tourLife) { tourAuto[tourCountdown.mid] = true; tourCountdown = null; playTourLife(); }
+    }
   }
 
   function bindTour() {
     const box = $('tourBody');
     box.querySelectorAll('[data-tclose]').forEach(b => b.addEventListener('click', () => closeModal()));
-    box.querySelectorAll('[data-tgo]').forEach(b => b.addEventListener('click', () => {
-      tourScreen = b.dataset.tgo; tourMsg = ''; tourConfirm = '';
-      if (tourScreen === 'match') tourShown = null;   // start fresh, so an old match is never shown as a result
-      renderTour(); pollTour();
-    }));
+    box.querySelectorAll('[data-tgo]').forEach(b => b.addEventListener('click', () => { tourScreen = b.dataset.tgo; tourMsg = ''; tourConfirm = ''; renderTour(true); pollTour(); }));
     const on = (id, fn) => { const el = $(id); if (el) el.addEventListener('click', fn); };
     const call = async (fn, body, okFn) => {
-      tourBusy = true; tourMsg = ''; renderTour();
+      tourBusy = true; tourMsg = ''; renderTour(true);
       let r = null;
       try { r = await rpc(fn, Object.assign({ p_id: player.id, p_secret: player.secret }, body)); } catch (e) { tourMsg = "Couldn't reach the server. Check your internet and try again."; }
       tourBusy = false;
@@ -1778,41 +1874,53 @@ const BUILD = '2026-11-09-tour1';
         closed: 'That tournament has already started.', time_up: "Time's up for this match.", match_over: 'This match is already over.',
         no_lives: 'You have no lives left in this match.', invalid: 'Something in the settings is invalid.' })[r.error] || 'Something went wrong. Try again.';
       else if (r) await okFn(r);
-      renderTour();
+      renderTour(true);
     };
     on('tName', () => openModal('mCreate'));
     on('tJoin', () => { const code = ($('tCode').value || '').trim().toUpperCase(); if (!code) return;
       call('nw_t_join', { p_code: code }, async r => { tourId = r.id; tourCode = r.code; tourStatus = 'open'; tourScreen = 'lobby'; await pollTour(); }); });
     const ci = $('tCode'); if (ci) { ci.addEventListener('keydown', e => { if (e.key === 'Enter') $('tJoin').click(); }); setTimeout(() => ci.focus(), 50); }
     box.querySelectorAll('.topt').forEach(b => b.addEventListener('click', () => {
-      const v = b.dataset.v; twiz[b.dataset.k] = v === 'true' ? true : v === 'false' ? false : isNaN(+v) ? v : +v; renderTour();
+      const v = b.dataset.v; twiz[b.dataset.k] = v === 'true' ? true : v === 'false' ? false : isNaN(+v) ? v : +v; renderTour(true);
     }));
-    on('wBack', () => { if (twiz.step === 1) closeModal(); else { twiz.step--; tourMsg = ''; renderTour(); } });
+    on('wBack', () => { if (twiz.step === 1) closeModal(); else { twiz.step--; tourMsg = ''; renderTour(true); } });
     on('wNext', () => {
-      if (twiz.step < 6) { twiz.step++; renderTour(); return; }
+      if (twiz.step < 6) { twiz.step++; renderTour(true); return; }
       call('nw_t_create', { p_play: twiz.plays, p_lives: twiz.lives, p_minutes: twiz.minutes, p_diff: twiz.diff, p_water: twiz.water, p_water_after: twiz.waterAfter },
         async r => { tourId = r.id; tourCode = r.code; tourStatus = 'open'; twiz.step = 1; tourScreen = 'manage'; await pollTour(); });
     });
-    on('tLeave', () => call('nw_t_leave', { p_tid: tourId }, async () => { tourId = null; tourState = null; tourStatus = null; tourScreen = 'join'; updateTourButtons(); }));
-    box.querySelectorAll('[data-kick]').forEach(b => b.addEventListener('click', () => call('nw_t_kick', { p_tid: tourId, p_name: b.dataset.kick }, async () => { await pollTour(); })));
-    on('tStart', () => call('nw_t_start', { p_tid: tourId }, async () => { await pollTour(); }));
-    on('tForce', () => { if (tourConfirm !== 'force') { tourConfirm = 'force'; renderTour(); return; } tourConfirm = ''; call('nw_t_force', { p_tid: tourId }, async () => { await pollTour(); }); });
-    on('tCancel', () => { if (tourConfirm !== 'cancel') { tourConfirm = 'cancel'; renderTour(); return; } tourConfirm = ''; call('nw_t_cancel', { p_tid: tourId }, async () => { await pollTour(); }); });
+    on('tLeave', () => { if (tourConfirm !== 'leave') { tourConfirm = 'leave'; renderTour(true); return; }
+      call('nw_t_leave', { p_tid: tourId }, async () => { tourId = null; tourState = null; tourStatus = null; tourScreen = 'join'; updateTourButtons(); }); });
+    box.querySelectorAll('[data-kick]').forEach(b => b.addEventListener('click', () => {
+      const n = b.dataset.kick;
+      if (tourConfirm !== 'kick:' + n) { tourConfirm = 'kick:' + n; renderTour(true); return; }
+      tourConfirm = ''; call('nw_t_kick', { p_tid: tourId, p_name: n }, async () => { await pollTour(); });
+    }));
+    on('tStart', () => call('nw_t_start', { p_tid: tourId }, async () => { await pollTour(); if (tourState && tourState.joined) { tourScreen = 'bracket'; tourDrive(); } }));
+    on('tForce', () => { if (tourConfirm !== 'force') { tourConfirm = 'force'; renderTour(true); return; } tourConfirm = ''; call('nw_t_force', { p_tid: tourId }, async () => { await pollTour(); }); });
+    on('tCancel', () => { if (tourConfirm !== 'cancel') { tourConfirm = 'cancel'; renderTour(true); return; } tourConfirm = ''; call('nw_t_cancel', { p_tid: tourId }, async () => { await pollTour(); }); });
     on('tForget', () => { tourId = null; tourState = null; tourStatus = null; tourScreen = 'join'; updateTourButtons(); closeModal(); });
-    on('tPlay', () => playTourLife());
+    on('tResOk', () => { tourScreen = 'bracket'; renderTour(true); tourDrive(); pollTour(); });
+    on('tGoNow', () => { const mm = myMatch(); if (mm) tourAuto[mm.id] = true; tourCountdown = null; playTourLife(); });
+    on('tPlay', () => { const mm = myMatch(); if (mm) tourAuto[mm.id] = true; playTourLife(); });
   }
 
   /* ---------- playing a life ---------- */
   async function playTourLife() {
     const mm = myMatch(); if (!mm || tourBusy) return;
-    tourBusy = true; renderTour();
+    tourBusy = true; renderTour(true);
     let r = null;
     try { r = await rpc('nw_t_life_start', { p_id: player.id, p_secret: player.secret, p_mid: mm.id }); } catch (e) {}
     tourBusy = false;
-    if (!r || r.error) { tourMsg = r && r.error === 'time_up' ? "Time's up for this match." : r && r.error === 'no_lives' ? 'You have no lives left.' : "Couldn't start the life. Try again."; await pollTour(); renderTour(); return; }
+    if (!r || r.error) {
+      tourLife = null; hideTourHud();
+      tourMsg = r && r.error === 'time_up' ? "Time's up for this match." : r && r.error === 'no_lives' ? 'You have no lives left.' : r && r.error === 'match_over' ? 'This match is already over.' : "Couldn't start the life. Try again.";
+      await pollTour(); tourOpen(myMatch() ? 'match' : 'bracket'); return;
+    }
     const opp = mm.me_a ? mm.b : mm.a;
     tourLife = { mid: mm.id, cfg: { difficulty: r.difficulty, water: r.water, water_after: r.water_after }, life: r.life, need: r.need, opp };
-    closeModal();
+    liveSent = -1;
+    if (!modal.hidden) closeModal();
     reset(); rngState = Number(r.seed) | 0;
     state = 'ready'; startEl.hidden = true; overEl.hidden = true; scoreEl.hidden = true; $('who').hidden = true;
     showTourHud(`Life ${r.life}/${r.need} · vs ${opp}`, 'Tap to fly');
@@ -1825,23 +1933,39 @@ const BUILD = '2026-11-09-tour1';
     const val = Math.round((score + frac) * 100) / 100, ms = Math.round(performance.now() - roundStart);
     showTourHud(`Life ${tl.life}/${tl.need}: ${val.toFixed(2)}`, 'Saving…');
     try { await rpc('nw_t_life_end', { p_id: player.id, p_secret: player.secret, p_mid: tl.mid, p_score: val, p_ms: ms }); } catch (e) {}
+    await pollTour();
+    const mm = matchById(tl.mid), more = mm && !mm.winner && sideOf(mm).my.length < mm.need && tourTimeLeft(mm) !== 0;
     setTimeout(() => {
       tourLife = null; hideTourHud();
       reset(); state = 'ready'; startEl.hidden = false; overEl.hidden = true; scoreEl.hidden = true;
-      tourOpen('match');
-    }, 700);
+      if (more) playTourLife();                // straight into the next life (tap to fly)
+      else tourDrive();                        // waiting for the opponent, or the result
+      if (!more && modal.hidden) tourOpen(mm && !mm.winner ? 'match' : 'bracket');
+    }, more ? 1200 : 900);
   }
 
   $('tourBtn').addEventListener('click', () => {
     if (!player) { openModal('mCreate'); return; }
-    tourOpen(tourActive() ? tourHome() : 'join');
+    tourOpen(tourActive() || tourStatus === 'done' ? tourHome() : 'join');
   });
   $('adminBtn').addEventListener('click', () => {
     if (tourActive() && tourState && tourState.is_host) tourOpen('manage');
     else { twiz.step = 1; tourOpen('wizard'); }
   });
-  // keep the home button fresh (e.g. "Your match is ready!") while on the home screen
-  setInterval(() => { if (tourActive() && modal.hidden && state !== 'play') pollTour(); }, 8000);
+  // polling: fast while in a tournament window or flying a tournament life, slower on the home screen
+  setInterval(() => {
+    if (!tourId) return;
+    const inTour = !modal.hidden && !$('mTour').hidden;
+    if (inTour || tourLife) pollTour();
+  }, 1500);
+  setInterval(() => { if (tourActive() && modal.hidden && !tourLife && state !== 'play') pollTour(); }, 4000);
+  setInterval(() => {
+    tickTourTexts();
+    if (tourLife) {
+      drawTourBoard();
+      if (state === 'play' && score !== liveSent) { liveSent = score; rpc('nw_t_live', { p_id: player.id, p_secret: player.secret, p_mid: tourLife.mid, p_score: score }).catch(() => {}); }
+    }
+  }, 300);
   loadMyTour();
 
   /* the little looping demo inside the popup: an autopilot bird meets a water pipe */
