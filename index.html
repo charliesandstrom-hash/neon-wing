@@ -129,6 +129,60 @@ h2{margin:0;font-family:var(--display);font-weight:400;font-size:clamp(40px,10vw
   border:0;border-radius:10px;padding:13px 18px;cursor:pointer;box-shadow:0 0 18px rgba(33,243,255,.45)}
 .btn:hover{filter:brightness(1.1)}
 .btn:disabled{opacity:.45;cursor:default;box-shadow:none;filter:none}
+/* tournaments */
+.tourbig{pointer-events:auto;width:min(320px,86vw);font:700 17px/1 var(--ui);letter-spacing:.14em;text-transform:uppercase;cursor:pointer;
+  color:#fff;background:rgba(255,210,59,.1);border:2px solid var(--gold);border-radius:12px;padding:15px 12px;
+  text-shadow:0 0 10px rgba(255,210,59,.9);box-shadow:0 0 20px rgba(255,210,59,.35),inset 0 0 16px rgba(255,210,59,.12)}
+.tourbig:hover{background:rgba(255,210,59,.18)}
+.tourbig.ready{animation:pulse 1.2s ease-in-out infinite}
+.btn.admin{background:var(--gold);color:var(--void);box-shadow:0 0 14px rgba(255,210,59,.45)}
+.tourhud{position:absolute;left:50%;top:calc(96px + var(--top));transform:translateX(-50%);display:flex;flex-direction:column;align-items:center;gap:8px;
+  pointer-events:none;text-align:center;width:min(90vw,420px)}
+.tourhud b{font-size:15px;letter-spacing:.12em;text-transform:uppercase;color:var(--gold);text-shadow:0 0 10px rgba(255,210,59,.7)}
+.tourhud span{font-size:22px;font-weight:700;color:var(--lime);text-shadow:0 0 12px rgba(182,255,59,.7)}
+.tourbody{display:flex;flex-direction:column;gap:12px}
+.tstep{margin:0;font-size:11px;font-weight:700;letter-spacing:.24em;text-transform:uppercase;color:var(--gold)}
+.topts{display:flex;flex-wrap:wrap;gap:8px}
+.topt{font:700 14px/1.1 var(--ui);color:var(--ink);background:#07040f;border:1.5px solid rgba(255,255,255,.2);border-radius:10px;padding:11px 13px;cursor:pointer;flex:1 1 auto;text-align:center}
+.topt[aria-pressed="true"]{border-color:var(--gold);color:var(--gold);box-shadow:0 0 12px rgba(255,210,59,.4)}
+.topt small{display:block;font-weight:500;font-size:11px;color:var(--dim);margin-top:4px}
+.tcode{font:700 30px/1 var(--ui);letter-spacing:.16em;text-align:center;color:var(--gold);padding:14px;border:2px dashed var(--gold);border-radius:12px;
+  text-shadow:0 0 14px rgba(255,210,59,.7);user-select:all;-webkit-user-select:all}
+.tinput{text-transform:uppercase;text-align:center;letter-spacing:.14em;font-size:20px}
+.tkv{display:grid;grid-template-columns:auto 1fr;gap:5px 14px;font-size:14px;margin:0}
+.tkv dt{color:var(--dim)}
+.tkv dd{margin:0;color:#fff;font-weight:700;text-align:right}
+.tlist{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:4px;max-height:220px;overflow:auto}
+.tlist li{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:7px 10px;border-radius:8px;background:rgba(255,255,255,.04);font-size:14px}
+.tlist li.me{background:rgba(33,243,255,.14);color:var(--cyan);font-weight:700}
+.tlist li.out{color:var(--dim);text-decoration:line-through}
+.tkick{font:700 12px/1 var(--ui);color:#ff6b88;background:none;border:1px solid rgba(255,77,109,.5);border-radius:6px;padding:4px 8px;cursor:pointer}
+.tpair{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:8px;padding:8px 10px;border-radius:10px;background:rgba(255,255,255,.04);font-size:13px}
+.tpair span{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tpair span:last-child{text-align:right}
+.tpair.mine{background:rgba(255,210,59,.12);box-shadow:inset 0 0 0 1px rgba(255,210,59,.6)}
+.tpair .vs{color:var(--dim);font-size:11px;font-variant-numeric:tabular-nums}
+.tpair .w{color:var(--lime);font-weight:700}
+.tpair .l{color:var(--dim);text-decoration:line-through}
+.tvs{display:grid;grid-template-columns:1fr auto 1fr;gap:8px;align-items:stretch}
+.tside{display:flex;flex-direction:column;gap:6px;padding:12px;border-radius:12px;background:rgba(255,255,255,.04);border:1.5px solid rgba(33,243,255,.45);min-width:0}
+.tside.opp{border-color:rgba(255,43,214,.55)}
+.tside .n{font-size:12px;font-weight:700;letter-spacing:.06em;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tside .t{font-size:28px;font-weight:700;color:#fff;font-variant-numeric:tabular-nums;line-height:1}
+.tside .h{font-size:13px;letter-spacing:2px;color:var(--pink);word-break:break-all}
+.tside.mine .h{color:var(--cyan)}
+.tside .live{font-size:11px;color:var(--lime)}
+.tmid{display:grid;place-items:center;font-weight:700;color:var(--dim)}
+.ttimer{font:700 18px/1 var(--ui);color:var(--gold);font-variant-numeric:tabular-nums;text-align:right}
+.tlives{display:flex;flex-wrap:wrap;gap:6px;font-size:12px}
+.tlives span{padding:4px 8px;border-radius:6px;background:rgba(255,255,255,.06);font-variant-numeric:tabular-nums}
+.tbig{font-family:var(--display);font-size:42px;line-height:1;text-align:center;color:#fff}
+.tbig.win{text-shadow:0 0 6px #fff,0 0 22px var(--lime)}
+.tbig.lose{text-shadow:0 0 6px #fff,0 0 22px #ff4d6d}
+.tcrown{font-size:60px;text-align:center;line-height:1;filter:drop-shadow(0 0 18px rgba(255,210,59,.8))}
+.twait{margin:0;font-size:14px;color:var(--lime);text-align:center;animation:pulse 1.2s infinite}
+.tnote{margin:0;font-size:12px;color:var(--dim)}
+@media (prefers-reduced-motion:reduce){.twait,.tourbig.ready{animation:none}}
 .newstag{margin:0;font-size:12px;font-weight:700;letter-spacing:.3em;text-transform:uppercase;color:var(--lime);text-shadow:0 0 10px rgba(182,255,59,.6)}
 .newstitle{font-family:var(--display);font-weight:400;font-size:clamp(30px,8vw,42px);line-height:1;color:#fff;
   text-shadow:0 0 6px #3dd8ff,0 0 22px #3dd8ff}
@@ -228,6 +282,7 @@ input:focus{border-color:var(--pink);box-shadow:0 0 14px rgba(255,43,214,.4)}
   <canvas id="c" aria-label="Spelplan för Neon Wing"></canvas>
   <div id="score" class="score" hidden>0</div>
   <button id="who" class="chip who" type="button" hidden>Välj namn</button>
+  <div id="tourHud" class="tourhud" hidden><b id="tourHudA"></b><span id="tourHudB"></span></div>
   <button id="mute" class="chip mute" type="button">Sounds: on</button>
   <button id="music" class="chip mute music" type="button">Music: on</button>
 
@@ -239,10 +294,12 @@ input:focus{border-color:var(--pink);box-shadow:0 0 14px rgba(255,43,214,.4)}
     <div class="go">
       <p class="hint">Tryck för att flaxa</p>
       <p class="sub">Klick, tryck eller mellanslag · Rekord: <b id="best0">0</b></p>
+      <button id="tourBtn" class="tourbig" type="button" hidden>🏆 Join Tournament</button>
       <div class="btnrow">
         <button id="lbBtn" class="btn ghost small" type="button" hidden>Leaderboard</button>
         <button id="shopBtn" class="btn ghost small shopsmall" type="button" hidden>◆ Shop</button>
       </div>
+      <button id="adminBtn" class="btn small admin" type="button" hidden>👑 Admin</button>
     </div>
   </div>
 
@@ -313,6 +370,8 @@ input:focus{border-color:var(--pink);box-shadow:0 0 14px rgba(255,43,214,.4)}
       </form>
       <div class="row"><button class="link" type="button" id="recBack">Tillbaka</button></div>
     </section>
+
+    <section id="mTour" lang="en" hidden><div id="tourBody" class="tourbody"></div></section>
 
     <section id="mNews" lang="en" hidden>
       <p class="newstag">New update</p>
@@ -406,7 +465,7 @@ const LB_KEY = 'sb_publishable_quKPe6oSHKYU431WblJnog_5ksg9cT2';   // den publik
 /* ===================================================================== */
 
 /* Versionsnummer: ÄNDRA vid varje uppdatering, så laddar alla öppna spel om sig automatiskt */
-const BUILD = '2026-11-08-water1';
+const BUILD = '2026-11-09-tour1';
 
 (() => {
   const $ = id => document.getElementById(id);
@@ -1158,7 +1217,8 @@ const BUILD = '2026-11-08-water1';
   function syncMusic() {
     if (!ac || !musicOn) return;
     const boardOpen = !modal.hidden && (!$('mShop').hidden || !$('mBoard').hidden);
-    const wantLobby = state === 'ready' || boardOpen;
+    const tourOpenNow = !modal.hidden && !$('mTour').hidden;
+    const wantLobby = (state === 'ready' && !tourLife) || boardOpen || tourOpenNow;
     const want = wantLobby ? lobby : music, other = wantLobby ? music : lobby;
     if (want.playing) return;
     const fresh = !other.playing;
@@ -1185,9 +1245,11 @@ const BUILD = '2026-11-08-water1';
       skins: Array.isArray(w.skins) && w.skins.length ? w.skins : (wallet.skins || ['neon']),
       skin: w.skin || wallet.skin || 'neon',
       maps: Array.isArray(w.maps) && w.maps.length ? w.maps : (wallet.maps || ['city']),
-      map: w.map || wallet.map || 'city'
+      map: w.map || wallet.map || 'city',
+      admin: w.admin != null ? !!w.admin : !!wallet.admin
     };
     saveWallet();
+    try { updateTourButtons(); } catch (e) {}
   }
   const curSkin = () => skinById(player && wallet.skins.includes(wallet.skin) ? wallet.skin : 'neon');
   async function syncWallet() {
@@ -1270,7 +1332,7 @@ const BUILD = '2026-11-08-water1';
 
   /* modal */
   const modal = $('modal');
-  const secs = ['mCreate', 'mCode', 'mRecover', 'mBoard', 'mShop', 'mNews'];
+  const secs = ['mCreate', 'mCode', 'mRecover', 'mBoard', 'mShop', 'mNews', 'mTour'];
   /* player stats */
   function setTab(t) {
     const lb = t === 'lb';
@@ -1485,6 +1547,303 @@ const BUILD = '2026-11-08-water1';
   $('newsOk').addEventListener('click', () => closeModal());
   decideNews();
 
+  /* =====================================================================
+     TOURNAMENTS – all rules live on the server (nw_t_* functions);
+     the game only shows the state and plays lives with the server's seed.
+     ===================================================================== */
+  const escH = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  let tourId = null, tourStatus = null, tourCode = null, tourState = null, tourScreen = 'join';
+  let tourPoll = 0, tourClockOff = 0, tourBusy = false, tourMsg = '', tourConfirm = '';
+  let tourLife = null;      // { mid, cfg, life, need, opp } while a tournament life is being played
+  let tourShown = null;     // the match last shown on the match screen, for the result screen
+  let rngState = 1;
+  // mulberry32: the same seed gives both players the exact same pipes
+  function seededRandom() {
+    rngState = (rngState + 0x6D2B79F5) | 0;
+    let q = Math.imul(rngState ^ (rngState >>> 15), 1 | rngState);
+    q = (q + Math.imul(q ^ (q >>> 7), 61 | q)) ^ q;
+    return ((q ^ (q >>> 14)) >>> 0) / 4294967296;
+  }
+  function rng() { return tourLife ? seededRandom() : Math.random(); }
+  function diffLevel() {   // 0..1 along the difficulty curve
+    if (tourLife) { if (tourLife.cfg.difficulty === 'Easy') return 0; if (tourLife.cfg.difficulty === 'Hard') return 1; }
+    return Math.min(score / 40, 1);
+  }
+  const twiz = { step: 1, plays: true, lives: 4, minutes: 10, diff: 'Normal', water: true, waterAfter: 40 };
+  const tourActive = () => !!tourId && (tourStatus === 'open' || tourStatus === 'running');
+  const myMatch = () => tourState && tourState.matches ? tourState.matches.find(m => m.mine) : null;
+  const meRow = () => tourState && tourState.players ? tourState.players.find(p => p.me) : null;
+  const fmt2 = v => (Math.round(Number(v || 0) * 100) / 100).toFixed(2);
+  function roundLabel() {
+    if (!tourState || !tourState.matches) return '';
+    const n = tourState.matches.reduce((a, m) => a + (m.b ? 2 : 1), 0);
+    return n <= 2 ? 'Final' : n <= 4 ? 'Semifinal' : n <= 8 ? 'Quarterfinal' : 'Round ' + tourState.round;
+  }
+  function tourHome() {
+    if (!tourActive()) return 'join';
+    if (tourStatus === 'open') return tourState && tourState.is_host ? 'manage' : 'lobby';
+    return 'bracket';
+  }
+  function updateTourButtons() {
+    const b = $('tourBtn');
+    b.hidden = !lbOn;
+    const mm = myMatch(), ready = tourStatus === 'running' && mm && !mm.winner && mm.b;
+    b.textContent = !tourActive() ? '🏆 Join Tournament' : ready ? '⚔ Your match is ready!' : '🏆 Back to tournament';
+    b.classList.toggle('ready', !!ready);
+    $('adminBtn').hidden = !(lbOn && player && wallet.admin);
+  }
+  function showTourHud(a, bTxt) { $('tourHud').hidden = false; $('tourHudA').textContent = a; $('tourHudB').textContent = bTxt || ''; }
+  function hideTourHud() { $('tourHud').hidden = true; }
+
+  function tourOpen(screen) {
+    tourScreen = screen || tourHome(); tourMsg = ''; tourConfirm = '';
+    openModal('mTour'); renderTour();
+    clearInterval(tourPoll);
+    tourPoll = setInterval(() => {
+      if (modal.hidden || $('mTour').hidden) { clearInterval(tourPoll); tourPoll = 0; return; }
+      if (['lobby', 'manage', 'bracket', 'match'].includes(tourScreen)) pollTour();
+    }, 2000);
+    if (['lobby', 'manage', 'bracket', 'match'].includes(tourScreen)) pollTour();
+  }
+  async function pollTour() {
+    if (!tourId || !player || tourBusy) return;
+    try {
+      const st = await rpc('nw_t_state', { p_id: player.id, p_secret: player.secret, p_tid: tourId });
+      if (!st || st.error) return;
+      tourState = st; tourStatus = st.status; tourCode = st.code;
+      tourClockOff = Date.parse(st.now) - Date.now();
+      const mm = myMatch(), me = meRow();
+      // move the player along when things change on the server
+      if (tourScreen === 'lobby' && st.status !== 'open') tourScreen = 'bracket';
+      if (tourScreen === 'match') {
+        const gone = !mm || (tourShown && mm.id !== tourShown.id) || mm.winner || (me && me.out) || st.status !== 'running';
+        if (gone && tourShown) tourScreen = 'result';
+        else if (mm && !mm.winner) tourShown = { id: mm.id, opp: mm.me_a ? mm.b : mm.a, my: mm.me_a ? mm.a_total : mm.b_total, op: mm.me_a ? mm.b_total : mm.a_total };
+      }
+      updateTourButtons();
+      if (!modal.hidden && !$('mTour').hidden && !tourBusy && tourScreen !== 'wizard' && tourScreen !== 'join') renderTour();
+    } catch (e) {}
+  }
+  async function loadMyTour() {
+    if (!lbOn || !player) { updateTourButtons(); return; }
+    try {
+      const r = await rpc('nw_t_mine', { p_id: player.id, p_secret: player.secret });
+      if (r && r.id) {
+        tourId = r.id; tourCode = r.code; tourStatus = r.status;
+        await pollTour();
+        const mm = myMatch(), me = meRow();
+        if (r.status === 'running' && me && !me.out && mm && !mm.winner && mm.b && modal.hidden && state === 'ready') tourOpen('bracket');
+      }
+    } catch (e) {}
+    updateTourButtons();
+  }
+
+  /* ---------- screens ---------- */
+  function settingsHtml(s) {
+    return `<dl class="tkv">
+      <dt>Lives per match</dt><dd>${escH(s.lives)}</dd>
+      <dt>Time per match</dt><dd>${escH(s.minutes)} min</dd>
+      <dt>Difficulty</dt><dd>${escH(s.difficulty || s.diff)}</dd>
+      <dt>Water pipes</dt><dd>${s.water ? 'On, after ' + escH(s.water_after != null ? s.water_after : s.waterAfter) + ' pts' : 'Off'}</dd>
+      <dt>Final</dt><dd>10 lives, no time limit</dd>
+      <dt>Prize</dt><dd>500 ◆ + 👑</dd>
+    </dl>`;
+  }
+  function playersHtml(st, kick) {
+    return `<ul class="tlist">${(st.players || []).map(p => `<li class="${p.me ? 'me' : ''} ${p.out ? 'out' : ''}">${escH(p.name)}${kick && !p.me ? `<button class="tkick" type="button" data-kick="${escH(p.name)}">✕ Kick</button>` : ''}</li>`).join('')}</ul>`;
+  }
+  const msgHtml = () => tourMsg ? `<p class="err">${escH(tourMsg)}</p>` : '';
+
+  function renderTour() {
+    const box = $('tourBody'), st = tourState;
+    let h = '';
+    if (tourScreen === 'join') {
+      h = `<p class="tstep">Tournament</p><h3>Join Tournament</h3>
+        ${player ? `<p class="mtext">Enter the code you got from the host.</p>
+          <input id="tCode" class="tinput" maxlength="9" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="NEON-XXXX">
+          ${msgHtml()}
+          <button class="btn" type="button" id="tJoin" style="background:var(--gold)">Join</button>`
+        : `<p class="mtext">You need a player name to join tournaments.</p><button class="btn" type="button" id="tName">Choose a name</button>`}
+        <button class="btn ghost" type="button" data-tclose>Close</button>`;
+    } else if (tourScreen === 'wizard') {
+      const s = twiz.step;
+      const opt = (k, v, label, small) => `<button class="topt" type="button" data-k="${k}" data-v="${v}" aria-pressed="${String(twiz[k]) === String(v)}">${label}${small ? `<small>${small}</small>` : ''}</button>`;
+      let body = '';
+      if (s === 1) body = `<h3>Do you want to play in this tournament?</h3><div class="topts">${opt('plays', true, "Yes, I'll play")}${opt('plays', false, 'No, just host')}</div>`;
+      if (s === 2) body = `<h3>How many lives should each player have per match?</h3><div class="topts">${[1, 2, 3, 4, 5, 6, 8, 10].map(n => opt('lives', n, n)).join('')}</div><p class="tnote">The final always has 10 lives.</p>`;
+      if (s === 3) body = `<h3>How long does each match last?</h3><div class="topts">${[5, 10, 15, 20].map(n => opt('minutes', n, n + ' min')).join('')}</div><p class="tnote">The final has no time limit.</p>`;
+      if (s === 4) body = `<h3>Difficulty?</h3><div class="topts" style="flex-direction:column">${opt('diff', 'Easy', '🟢 Easy', 'Slow speed and big gaps the whole time')}${opt('diff', 'Normal', '🟡 Normal', 'Like the normal game, gets harder with points')}${opt('diff', 'Hard', '🔴 Hard', 'Full speed and small gaps from the start')}</div>`;
+      if (s === 5) body = `<h3>Water pipes?</h3><div class="topts">${opt('water', false, 'Off')}${opt('water', true, 'On')}</div>
+        ${twiz.water ? `<p class="tstep">Start appearing after</p><div class="topts">${[0, 10, 20, 30, 40, 60].map(n => opt('waterAfter', n, n + ' pts')).join('')}</div><p class="tnote">Once they start: about 1 in 10 pipes, never two in a row.</p>` : ''}`;
+      if (s === 6) body = `<h3>Ready?</h3><dl class="tkv"><dt>You play</dt><dd>${twiz.plays ? 'Yes' : 'No'}</dd></dl>${settingsHtml(twiz)}`;
+      h = `<p class="tstep">Create tournament · ${s <= 5 ? 'Step ' + s + '/5' : 'Summary'}</p>${body}${msgHtml()}
+        <div class="row"><button class="btn ghost small" type="button" id="wBack">${s === 1 ? 'Cancel' : '← Back'}</button>
+        <button class="btn small" type="button" id="wNext" style="background:var(--gold)" ${tourBusy ? 'disabled' : ''}>${s === 6 ? 'Create ✓' : 'Next →'}</button></div>`;
+    } else if (!st) {
+      h = `<p class="twait">Loading tournament…</p><button class="btn ghost" type="button" data-tclose>Close</button>`;
+    } else if (st.status === 'cancelled') {
+      h = `<h3>Tournament cancelled</h3><p class="mtext">The host cancelled tournament ${escH(st.code)}.</p><button class="btn" type="button" id="tForget">OK</button>`;
+    } else if (tourScreen === 'lobby') {
+      h = `<p class="tstep">Waiting room · ${escH(st.code)}</p><h3>Waiting for ${escH(st.host)} to start…</h3>
+        ${settingsHtml(st)}
+        <p class="tstep">${st.players.length} player${st.players.length === 1 ? '' : 's'} joined</p>${playersHtml(st, false)}
+        <p class="twait">Waiting…</p>${msgHtml()}
+        <div class="row"><button class="btn ghost small" type="button" id="tLeave">Leave</button><button class="btn small" type="button" data-tclose>Close</button></div>`;
+    } else if (tourScreen === 'manage') {
+      const open = st.status === 'open', running = st.status === 'running';
+      h = `<p class="tstep">👑 Admin · ${open ? 'open for players' : running ? roundLabel() + ' running' : 'finished'}</p>
+        <h3>Tournament code</h3><div class="tcode">${escH(st.code)}</div>
+        <p class="tnote">Share the code. Players press Join Tournament and type it in.</p>
+        ${settingsHtml(st)}
+        <p class="tstep">${st.players.length} player${st.players.length === 1 ? '' : 's'}</p>${playersHtml(st, open)}
+        ${msgHtml()}
+        ${open ? `<button class="btn" type="button" id="tStart" style="background:var(--gold)" ${st.players.length < 2 ? 'disabled' : ''}>▶ Start tournament</button>` : ''}
+        ${!open ? `<button class="btn" type="button" data-tgo="bracket">View bracket</button>` : ''}
+        ${running ? `<button class="btn ghost small" type="button" id="tForce">${tourConfirm === 'force' ? 'Tap again to end this round now' : 'Force next round'}</button>` : ''}
+        ${open || running ? `<button class="btn ghost small" type="button" id="tCancel">${tourConfirm === 'cancel' ? 'Tap again to cancel the tournament' : 'Cancel tournament'}</button>` : ''}
+        <button class="btn ghost small" type="button" data-tclose>Close</button>`;
+    } else if (tourScreen === 'bracket') {
+      const mm = myMatch(), me = meRow();
+      const pairs = (st.matches || []).map(m => {
+        const cls = n => m.winner ? (m.winner === n ? 'w' : 'l') : '';
+        return `<div class="tpair ${m.mine ? 'mine' : ''}"><span class="${cls(m.a)}">${escH(m.a)}</span>
+          <span class="vs">${!m.b ? 'BYE' : (m.a_lives.length || m.b_lives.length) ? fmt2(m.a_total) + ' – ' + fmt2(m.b_total) : 'vs'}</span>
+          <span class="${cls(m.b)}">${m.b ? escH(m.b) : '—'}</span></div>`;
+      }).join('');
+      let act = '';
+      if (st.status === 'done') act = `<div class="tcrown">👑</div><p class="mtext" style="text-align:center">Champion: <b style="color:var(--gold)">${escH(st.champion || '—')}</b> (+500 ◆)</p><button class="btn" type="button" id="tForget">Done</button>`;
+      else if (!st.joined) act = `<p class="mtext">You're hosting this tournament.</p>`;
+      else if (me && me.out) act = `<p class="mtext">You're out of the tournament. You can keep watching here.</p>`;
+      else if (mm && !mm.b) act = `<p class="mtext">You got a <b>bye</b> this round and go straight through. Wait for the next round.</p><p class="twait">Waiting for the other matches…</p>`;
+      else if (mm && !mm.winner) act = `<button class="btn" type="button" data-tgo="match" style="background:var(--gold)">⚔ Play your match</button>`;
+      else act = `<p class="twait">Waiting for the other matches…</p>`;
+      h = `<p class="tstep">${escH(st.code)} · ${st.status === 'done' ? 'Finished' : roundLabel()}</p>
+        <h3>${st.status === 'done' ? 'Tournament finished' : roundLabel()}</h3>${pairs}${act}
+        ${st.is_host && st.status !== 'done' ? `<button class="btn ghost small" type="button" data-tgo="manage">👑 Admin</button>` : ''}
+        <button class="btn ghost small" type="button" data-tclose>Close</button>`;
+    } else if (tourScreen === 'match') {
+      const mm = myMatch();
+      if (!mm || !mm.b) { tourScreen = 'bracket'; return renderTour(); }
+      const my = mm.me_a ? mm.a_lives : mm.b_lives, op = mm.me_a ? mm.b_lives : mm.a_lives;
+      const myT = mm.me_a ? mm.a_total : mm.b_total, opT = mm.me_a ? mm.b_total : mm.a_total;
+      const opn = mm.me_a ? mm.b : mm.a, opPlaying = mm.me_a ? mm.b_playing : mm.a_playing;
+      const need = mm.need, hearts = used => '❤'.repeat(Math.max(0, need - used)) + '○'.repeat(Math.min(need, used));
+      let left = null;
+      if (mm.deadline) left = Math.max(0, Math.round((Date.parse(mm.deadline) - (Date.now() + tourClockOff)) / 1000));
+      const timeTxt = mm.deadline ? `⏱ ${String(Math.floor(left / 60)).padStart(2, '0')}:${String(left % 60).padStart(2, '0')}` : 'No time limit';
+      const canPlay = my.length < need && (left == null || left > 0) && !mm.winner;
+      tourShown = { id: mm.id, opp: opn, my: myT, op: opT };
+      h = `<div class="row" style="align-items:center"><p class="tstep">${roundLabel()} · ${need} lives</p><span class="ttimer">${timeTxt}</span></div>
+        <div class="tvs">
+          <div class="tside mine"><span class="n">YOU</span><span class="t">${fmt2(myT)}</span><span class="h">${hearts(my.length)}</span></div>
+          <div class="tmid">VS</div>
+          <div class="tside opp"><span class="n">${escH(opn)}</span><span class="t">${fmt2(opT)}</span><span class="h">${hearts(op.length)}</span>${opPlaying ? '<span class="live">● flying now</span>' : ''}</div>
+        </div>
+        <div class="tlives">${my.length ? my.map((v, i) => `<span>Life ${i + 1}: ${fmt2(v)}</span>`).join('') : '<span>No lives played yet</span>'}</div>
+        ${msgHtml()}
+        ${canPlay ? `<button class="btn" type="button" id="tPlay" style="background:var(--gold)" ${tourBusy ? 'disabled' : ''}>▶ Play life ${my.length + 1} of ${need}</button>`
+          : `<p class="twait">${left === 0 ? "Time's up! " : 'All lives used. '}Waiting for ${escH(opn)}…</p>`}
+        <p class="tnote">Same pipes for both of you, and a new layout every life. Score = pipes + how far you got to the next one.</p>
+        <button class="btn ghost small" type="button" data-tgo="bracket">Bracket</button>`;
+    } else if (tourScreen === 'result') {
+      const me = meRow(), sh = tourShown || { opp: '?', my: 0, op: 0 };
+      const champ = st.status === 'done' && st.champion && player && st.champion.toLowerCase() === player.name.toLowerCase();
+      const won = champ || (me && !me.out);
+      h = `${champ ? `<div class="tcrown">👑</div><div class="tbig win">Champion</div><p class="mtext" style="text-align:center">You won the tournament! +500 neon-coins.</p>`
+          : `<div class="tbig ${won ? 'win' : 'lose'}">${won ? 'You win' : 'Knocked out'}</div>`}
+        <p class="mtext" style="text-align:center">vs ${escH(sh.opp)}</p>
+        <button class="btn" type="button" data-tgo="bracket" style="background:var(--gold)">${won && !champ ? 'Next round' : 'See the bracket'}</button>`;
+      if (champ) syncWallet();
+    }
+    box.innerHTML = h;
+    bindTour();
+  }
+
+  function bindTour() {
+    const box = $('tourBody');
+    box.querySelectorAll('[data-tclose]').forEach(b => b.addEventListener('click', () => closeModal()));
+    box.querySelectorAll('[data-tgo]').forEach(b => b.addEventListener('click', () => {
+      tourScreen = b.dataset.tgo; tourMsg = ''; tourConfirm = '';
+      if (tourScreen === 'match') tourShown = null;   // start fresh, so an old match is never shown as a result
+      renderTour(); pollTour();
+    }));
+    const on = (id, fn) => { const el = $(id); if (el) el.addEventListener('click', fn); };
+    const call = async (fn, body, okFn) => {
+      tourBusy = true; tourMsg = ''; renderTour();
+      let r = null;
+      try { r = await rpc(fn, Object.assign({ p_id: player.id, p_secret: player.secret }, body)); } catch (e) { tourMsg = "Couldn't reach the server. Check your internet and try again."; }
+      tourBusy = false;
+      if (r && r.error) tourMsg = ({ auth: "Your name couldn't be verified.", not_admin: 'Only the admin can create tournaments.', not_host: 'Only the host can do that.',
+        too_few: 'At least 2 players are needed to start.', no_code: "That code doesn't match a tournament. Check it and try again.",
+        closed: 'That tournament has already started.', time_up: "Time's up for this match.", match_over: 'This match is already over.',
+        no_lives: 'You have no lives left in this match.', invalid: 'Something in the settings is invalid.' })[r.error] || 'Something went wrong. Try again.';
+      else if (r) await okFn(r);
+      renderTour();
+    };
+    on('tName', () => openModal('mCreate'));
+    on('tJoin', () => { const code = ($('tCode').value || '').trim().toUpperCase(); if (!code) return;
+      call('nw_t_join', { p_code: code }, async r => { tourId = r.id; tourCode = r.code; tourStatus = 'open'; tourScreen = 'lobby'; await pollTour(); }); });
+    const ci = $('tCode'); if (ci) { ci.addEventListener('keydown', e => { if (e.key === 'Enter') $('tJoin').click(); }); setTimeout(() => ci.focus(), 50); }
+    box.querySelectorAll('.topt').forEach(b => b.addEventListener('click', () => {
+      const v = b.dataset.v; twiz[b.dataset.k] = v === 'true' ? true : v === 'false' ? false : isNaN(+v) ? v : +v; renderTour();
+    }));
+    on('wBack', () => { if (twiz.step === 1) closeModal(); else { twiz.step--; tourMsg = ''; renderTour(); } });
+    on('wNext', () => {
+      if (twiz.step < 6) { twiz.step++; renderTour(); return; }
+      call('nw_t_create', { p_play: twiz.plays, p_lives: twiz.lives, p_minutes: twiz.minutes, p_diff: twiz.diff, p_water: twiz.water, p_water_after: twiz.waterAfter },
+        async r => { tourId = r.id; tourCode = r.code; tourStatus = 'open'; twiz.step = 1; tourScreen = 'manage'; await pollTour(); });
+    });
+    on('tLeave', () => call('nw_t_leave', { p_tid: tourId }, async () => { tourId = null; tourState = null; tourStatus = null; tourScreen = 'join'; updateTourButtons(); }));
+    box.querySelectorAll('[data-kick]').forEach(b => b.addEventListener('click', () => call('nw_t_kick', { p_tid: tourId, p_name: b.dataset.kick }, async () => { await pollTour(); })));
+    on('tStart', () => call('nw_t_start', { p_tid: tourId }, async () => { await pollTour(); }));
+    on('tForce', () => { if (tourConfirm !== 'force') { tourConfirm = 'force'; renderTour(); return; } tourConfirm = ''; call('nw_t_force', { p_tid: tourId }, async () => { await pollTour(); }); });
+    on('tCancel', () => { if (tourConfirm !== 'cancel') { tourConfirm = 'cancel'; renderTour(); return; } tourConfirm = ''; call('nw_t_cancel', { p_tid: tourId }, async () => { await pollTour(); }); });
+    on('tForget', () => { tourId = null; tourState = null; tourStatus = null; tourScreen = 'join'; updateTourButtons(); closeModal(); });
+    on('tPlay', () => playTourLife());
+  }
+
+  /* ---------- playing a life ---------- */
+  async function playTourLife() {
+    const mm = myMatch(); if (!mm || tourBusy) return;
+    tourBusy = true; renderTour();
+    let r = null;
+    try { r = await rpc('nw_t_life_start', { p_id: player.id, p_secret: player.secret, p_mid: mm.id }); } catch (e) {}
+    tourBusy = false;
+    if (!r || r.error) { tourMsg = r && r.error === 'time_up' ? "Time's up for this match." : r && r.error === 'no_lives' ? 'You have no lives left.' : "Couldn't start the life. Try again."; await pollTour(); renderTour(); return; }
+    const opp = mm.me_a ? mm.b : mm.a;
+    tourLife = { mid: mm.id, cfg: { difficulty: r.difficulty, water: r.water, water_after: r.water_after }, life: r.life, need: r.need, opp };
+    closeModal();
+    reset(); rngState = Number(r.seed) | 0;
+    state = 'ready'; startEl.hidden = true; overEl.hidden = true; scoreEl.hidden = true; $('who').hidden = true;
+    showTourHud(`Life ${r.life}/${r.need} · vs ${opp}`, 'Tap to fly');
+  }
+  async function finishTourLife() {
+    const tl = tourLife;
+    const nx = pipes.find(p => !p.scored), sp = 245 - 35 * diffLevel();
+    let frac = 0;
+    if (nx) frac = Math.max(0, Math.min(0.99, 1 - ((nx.x + PW) - (BX - R)) / sp));
+    const val = Math.round((score + frac) * 100) / 100, ms = Math.round(performance.now() - roundStart);
+    showTourHud(`Life ${tl.life}/${tl.need}: ${val.toFixed(2)}`, 'Saving…');
+    try { await rpc('nw_t_life_end', { p_id: player.id, p_secret: player.secret, p_mid: tl.mid, p_score: val, p_ms: ms }); } catch (e) {}
+    setTimeout(() => {
+      tourLife = null; hideTourHud();
+      reset(); state = 'ready'; startEl.hidden = false; overEl.hidden = true; scoreEl.hidden = true;
+      tourOpen('match');
+    }, 700);
+  }
+
+  $('tourBtn').addEventListener('click', () => {
+    if (!player) { openModal('mCreate'); return; }
+    tourOpen(tourActive() ? tourHome() : 'join');
+  });
+  $('adminBtn').addEventListener('click', () => {
+    if (tourActive() && tourState && tourState.is_host) tourOpen('manage');
+    else { twiz.step = 1; tourOpen('wizard'); }
+  });
+  // keep the home button fresh (e.g. "Your match is ready!") while on the home screen
+  setInterval(() => { if (tourActive() && modal.hidden && state !== 'play') pollTour(); }, 8000);
+  loadMyTour();
+
   /* the little looping demo inside the popup: an autopilot bird meets a water pipe */
   const ND = { W: 400, G: 360, scale: 1, pipes: [], parts: [], y: 180, vy: 0, wet: 0, inW: false, n: 0, wing: 0, t: 0 };
   function ndSpawn(x) {
@@ -1582,9 +1941,11 @@ const BUILD = '2026-11-08-water1';
     startEl.hidden = true; overEl.hidden = true; $('again').hidden = true;
     scoreEl.hidden = false; scoreEl.textContent = '0';
     $('who').hidden = true;
+    if (tourLife) $('tourHudB').textContent = '';
   }
   function input() {
     if (!modal.hidden) return;
+    if (tourLife && state === 'dead') return;   // the life is being saved
     initAudio();
     if (state === 'ready') { startPlay(); flap(); }
     else if (state === 'play') flap();
@@ -1596,6 +1957,7 @@ const BUILD = '2026-11-08-water1';
     burst(BX, bird.y, 40, ['#ff2bd6', '#21f3ff', '#ffffff', '#ffd23b'], 320, 0.9, 3.2);
     tone(220, 40, 0.5, 'sawtooth', 0.09);
     try { if (navigator.vibrate) navigator.vibrate(120); } catch (e) {}
+    if (tourLife) { finishTourLife(); return; }   // tournament lives never touch records, coins or the normal leaderboard
     const isNew = score > best;
     if (isNew) { best = score; try { localStorage.setItem(KEY, best); } catch (e) {} }
     $('sNow').textContent = score; $('sBest').textContent = best; $('best0').textContent = best;
@@ -1605,18 +1967,21 @@ const BUILD = '2026-11-08-water1';
     if (lbOn) afterRun(score, Math.round(performance.now() - roundStart));
   }
   function spawn(x) {
-    const d = Math.min(score / 40, 1);
+    const d = diffLevel();
     const gap = 182 - 46 * d;
-    // water pipes: from 40 points, ~1 in 10, never two in a row, at least 6 normal pipes between
-    const water = score >= 40 && sinceWater >= 6 && Math.random() < 0.25;
-    const amp = !water && calmPipes === 0 && score >= 12 && Math.random() < 0.6 ? Math.min(45, 10 + (score - 12) * 3) : 0;
+    // water pipes: from 40 points (or the tournament's setting), ~1 in 10, never two in a row, at least 6 normal pipes between
+    const waterOn = tourLife ? tourLife.cfg.water : true, waterFrom = tourLife ? tourLife.cfg.water_after : 40;
+    const water = waterOn && score >= waterFrom && sinceWater >= 6 && rng() < 0.25;
+    const easy = tourLife && tourLife.cfg.difficulty === 'Easy', hard = tourLife && tourLife.cfg.difficulty === 'Hard';
+    const ampScore = hard ? 40 : score;
+    const amp = !water && !easy && calmPipes === 0 && ampScore >= 12 && rng() < 0.6 ? Math.min(45, 10 + (ampScore - 12) * 3) : 0;
     const lo = 70 + gap / 2 + amp, hi = G - 70 - gap / 2 - amp;
-    let base = lo + Math.random() * Math.max(0, hi - lo);
+    let base = lo + rng() * Math.max(0, hi - lo);
     const prev = pipes[pipes.length - 1];
     if (prev) base = Math.max(prev.base - 210, Math.min(prev.base + 210, base));
     // fairness: while the bird may still be wet, never ask for a big climb
     if (calmPipes > 0 && prev) base = Math.max(prev.base - 30, Math.min(prev.base + 70, base));
-    pipes.push({ x, base, cy: base, gap, amp, f: 1.4 + Math.random(), ph: Math.random() * 6.28,
+    pipes.push({ x, base, cy: base, gap, amp, f: 1.4 + rng(), ph: rng() * 6.28,
       col: (pipeN + 1) % 10 === 0 ? '#b6ff3b' : COLS[pipeN % 2], idx: pipeN, scored: false, water, drops: [] });
     pipeN++;
     if (water) { sinceWater = 0; calmPipes = 5; } else { sinceWater++; if (calmPipes > 0) calmPipes--; }
@@ -1638,7 +2003,7 @@ const BUILD = '2026-11-08-water1';
       speed = 120; music.setIntensity(0);
       bird.y = G * 0.45 + Math.sin(t * 3) * 9; bird.rot = Math.sin(t * 3) * 0.08;
     } else if (state === 'play') {
-      const d = Math.min(score / 40, 1);
+      const d = diffLevel();
       speed = 190 + 90 * d;
       music.setIntensity(Math.pow(Math.min(score / 100, 1), 1.6));   // tempo rises slowly: 112 -> 128 BPM at 100 points
       const spacing = 245 - 35 * d;
@@ -1675,8 +2040,8 @@ const BUILD = '2026-11-08-water1';
       speed = 0; deadT += dt;
       if (bird.y + R < G) { bird.vy = Math.min(bird.vy + GRAV * dt, 800); bird.y += bird.vy * dt; bird.rot = Math.min(1.5, bird.rot + dt * 5); }
       if (bird.y + R > G) { bird.y = G - R; bird.vy = 0; }
-      if (deadT > 0.55 && overEl.hidden) overEl.hidden = false;
-      if (deadT > 0.9) $('again').hidden = false;
+      if (deadT > 0.55 && overEl.hidden && !tourLife) overEl.hidden = false;
+      if (deadT > 0.9 && !tourLife) $('again').hidden = false;
     }
 
     cityOff = (cityOff + speed * 0.22 * dt) % cityW;
@@ -2383,7 +2748,7 @@ const BUILD = '2026-11-08-water1';
     update(dt); draw();
     if (!modal.hidden && !$('mShop').hidden) drawShop(dt, t);
     if (!modal.hidden && !$('mNews').hidden) drawNewsDemo(dt);
-    if (newsState === 'pending' && modal.hidden && state === 'ready') showNews();
+    if (newsState === 'pending' && modal.hidden && state === 'ready' && !tourLife) showNews();
     requestAnimationFrame(frame);
   }
 
@@ -2418,7 +2783,7 @@ const BUILD = '2026-11-08-water1';
 
   /* ---------- auto-update ---------- */
   async function checkUpdate() {
-    if (state === 'play' || !modal.hidden || location.protocol === 'file:') return;
+    if (state === 'play' || !modal.hidden || tourLife || location.protocol === 'file:') return;
     try {
       const r = await fetch(location.pathname + '?check=' + Date.now(), { cache: 'no-store' });
       if (!r.ok) return;
