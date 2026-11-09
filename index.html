@@ -492,7 +492,7 @@ const LB_KEY = 'sb_publishable_quKPe6oSHKYU431WblJnog_5ksg9cT2';   // den publik
 /* ===================================================================== */
 
 /* Versionsnummer: ÄNDRA vid varje uppdatering, så laddar alla öppna spel om sig automatiskt */
-const BUILD = '2026-11-09-tour2';
+const BUILD = '2026-11-09-tour3';
 
 (() => {
   const $ = id => document.getElementById(id);
@@ -1600,7 +1600,8 @@ const BUILD = '2026-11-09-tour2';
     if (tourLife) { if (tourLife.cfg.difficulty === 'Easy') return 0; if (tourLife.cfg.difficulty === 'Hard') return 1; }
     return Math.min(score / 40, 1);
   }
-  const twiz = { step: 1, plays: true, lives: 4, minutes: 10, diff: 'Normal', water: true, waterAfter: 40 };
+  const twiz = { step: 1, plays: true, lives: 4, minutes: 10, diff: 'Normal', water: true, waterAfter: 40, prize: 500 };
+  const prizeText = p => Number(p) > 0 ? `${p} ◆ + 👑` : 'No coins (just 👑)';
   const tourActive = () => !!tourId && (tourStatus === 'open' || tourStatus === 'running');
   const curMatches = () => tourState && tourState.matches ? tourState.matches.filter(m => m.round === tourState.round) : [];
   const myMatch = () => curMatches().find(m => m.mine) || null;
@@ -1714,7 +1715,7 @@ const BUILD = '2026-11-09-tour2';
       <dt>Difficulty</dt><dd>${escH(s.difficulty || s.diff)}</dd>
       <dt>Water pipes</dt><dd>${s.water ? 'On, after ' + escH(s.water_after != null ? s.water_after : s.waterAfter) + ' pts' : 'Off'}</dd>
       <dt>Final</dt><dd>10 lives, no time limit*</dd>
-      <dt>Prize</dt><dd>500 ◆ + 👑</dd>
+      <dt>Prize</dt><dd>${prizeText(s.prize != null ? s.prize : 500)}</dd>
     </dl><p class="tnote">*With only 2 players the whole tournament is one match with the lives you chose.</p>`;
   }
   function pairHtml(m) {
@@ -1750,16 +1751,17 @@ const BUILD = '2026-11-09-tour2';
       if (s === 4) body = `<h3>Difficulty?</h3><div class="topts" style="flex-direction:column">${opt('diff', 'Easy', '🟢 Easy', 'Slow speed and big gaps the whole time')}${opt('diff', 'Normal', '🟡 Normal', 'Like the normal game, gets harder with points')}${opt('diff', 'Hard', '🔴 Hard', 'Full speed and small gaps from the start')}</div>`;
       if (s === 5) body = `<h3>Water pipes?</h3><div class="topts">${opt('water', false, 'Off')}${opt('water', true, 'On')}</div>
         ${twiz.water ? `<p class="tstep">Start appearing after</p><div class="topts">${[0, 10, 20, 30, 40, 60].map(n => opt('waterAfter', n, n + ' pts')).join('')}</div><p class="tnote">Once they start: about 1 in 10 pipes, never two in a row.</p>` : ''}`;
-      if (s === 6) body = `<h3>Ready?</h3><dl class="tkv"><dt>You play</dt><dd>${twiz.plays ? 'Yes' : 'No'}</dd></dl>${settingsHtml(twiz)}`;
-      h = `<p class="tstep">Create tournament · ${s <= 5 ? 'Step ' + s + '/5' : 'Summary'}</p>${body}${msgHtml()}
+      if (s === 6) body = `<h3>Prize for the winner?</h3><div class="topts">${opt('prize', 0, 'No coins', 'Just the 👑')}${[100, 250, 500, 1000].map(n => opt('prize', n, n + ' ◆')).join('')}</div><p class="tnote">The champion gets the neon-coins automatically when the final ends.</p>`;
+      if (s === 7) body = `<h3>Ready?</h3><dl class="tkv"><dt>You play</dt><dd>${twiz.plays ? 'Yes' : 'No'}</dd></dl>${settingsHtml(twiz)}`;
+      h = `<p class="tstep">Create tournament · ${s <= 6 ? 'Step ' + s + '/6' : 'Summary'}</p>${body}${msgHtml()}
         <div class="row"><button class="btn ghost small" type="button" id="wBack">${s === 1 ? 'Cancel' : '← Back'}</button>
-        <button class="btn small" type="button" id="wNext" style="background:var(--gold)" ${tourBusy ? 'disabled' : ''}>${s === 6 ? 'Create ✓' : 'Next →'}</button></div>`;
+        <button class="btn small" type="button" id="wNext" style="background:var(--gold)" ${tourBusy ? 'disabled' : ''}>${s === 7 ? 'Create ✓' : 'Next →'}</button></div>`;
     } else if (tourScreen === 'result') {
       const m = matchById(tourResultId) || lastMineDone();
       if (!m) { tourScreen = 'bracket'; return renderTour(true); }
       const s = sideOf(m), iWon = m.winner && player && m.winner.toLowerCase() === player.name.toLowerCase();
       const champ = st && st.status === 'done' && st.champion && player && st.champion.toLowerCase() === player.name.toLowerCase();
-      h = `${champ ? `<div class="tcrown">👑</div><div class="tbig win">Champion</div><p class="mtext" style="text-align:center">You won the whole tournament! +500 neon-coins.</p>`
+      h = `${champ ? `<div class="tcrown">👑</div><div class="tbig win">Champion</div><p class="mtext" style="text-align:center">You won the whole tournament!${st && Number(st.prize) > 0 ? ' +' + st.prize + ' neon-coins.' : ''}</p>`
           : `<div class="tbig ${iWon ? 'win' : 'lose'}">${iWon ? 'You win!' : 'You lost'}</div>`}
         <div class="tres">
           <div class="p ${iWon ? 'win' : 'lose'}"><span class="badge">${iWon ? 'WINNER' : 'OUT'}</span><span class="nm">${escH(player ? player.name : 'You')}</span><span class="sc">${fmt2(s.myT)}</span></div>
@@ -1830,7 +1832,7 @@ const BUILD = '2026-11-09-tour2';
       const older = (st.matches || []).filter(m => m.round < st.round && m.b);
       const rounds = [...new Set(older.map(m => m.round))].sort((a, b) => b - a);
       let act = '';
-      if (st.status === 'done') act = `<div class="tcrown">👑</div><p class="mtext" style="text-align:center">Champion: <b style="color:var(--gold)">${escH(st.champion || '—')}</b> (+500 ◆)</p><button class="btn" type="button" id="tForget">Done</button>`;
+      if (st.status === 'done') act = `<div class="tcrown">👑</div><p class="mtext" style="text-align:center">Champion: <b style="color:var(--gold)">${escH(st.champion || '—')}</b>${Number(st.prize) > 0 ? ' (+' + st.prize + ' ◆)' : ''}</p><button class="btn" type="button" id="tForget">Done</button>`;
       else if (!st.joined) act = `<p class="mtext">You're hosting this tournament.</p>`;
       else if (me && me.out) act = `<p class="mtext">You're out of the tournament. You can keep watching here.</p>`;
       else if (mm && !mm.b) act = `<p class="mtext">You got a <b>bye</b> this round and go straight through.</p><p class="twait">Waiting for the other matches to finish…</p>`;
@@ -1885,8 +1887,8 @@ const BUILD = '2026-11-09-tour2';
     }));
     on('wBack', () => { if (twiz.step === 1) closeModal(); else { twiz.step--; tourMsg = ''; renderTour(true); } });
     on('wNext', () => {
-      if (twiz.step < 6) { twiz.step++; renderTour(true); return; }
-      call('nw_t_create', { p_play: twiz.plays, p_lives: twiz.lives, p_minutes: twiz.minutes, p_diff: twiz.diff, p_water: twiz.water, p_water_after: twiz.waterAfter },
+      if (twiz.step < 7) { twiz.step++; renderTour(true); return; }
+      call('nw_t_create', { p_play: twiz.plays, p_lives: twiz.lives, p_minutes: twiz.minutes, p_diff: twiz.diff, p_water: twiz.water, p_water_after: twiz.waterAfter, p_prize: twiz.prize },
         async r => { tourId = r.id; tourCode = r.code; tourStatus = 'open'; twiz.step = 1; tourScreen = 'manage'; await pollTour(); });
     });
     on('tLeave', () => { if (tourConfirm !== 'leave') { tourConfirm = 'leave'; renderTour(true); return; }
