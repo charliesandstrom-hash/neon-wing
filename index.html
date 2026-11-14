@@ -492,7 +492,7 @@ const LB_KEY = 'sb_publishable_quKPe6oSHKYU431WblJnog_5ksg9cT2';   // den publik
 /* ===================================================================== */
 
 /* Versionsnummer: ÄNDRA vid varje uppdatering, så laddar alla öppna spel om sig automatiskt */
-const BUILD = '2026-11-09-tour3';
+const BUILD = '2026-11-14-skins2';
 
 (() => {
   const $ = id => document.getElementById(id);
@@ -706,8 +706,116 @@ const BUILD = '2026-11-09-tour3';
         glowS(c, hslS(hue + 180, 62), 14); c.lineWidth = 2;
         c.beginPath(); c.moveTo(-10, -2); c.quadraticCurveTo(-18, -8 - 8 * wa, -24, -4 - 10 * wa); c.stroke();
         eyeS(c, 3, -2, 3, '#120a1e'); eyeS(c, 10, -2, 3, '#120a1e');
+      } },
+    { id: 'owl', name: 'Night Owl', price: 350, c: '#7f8cff', desc: 'Rund nattuggla med örontofsar och stora glödande ögon som blinkar ibland. Stjärnor i spåret.',
+      trail: () => ({ col: Math.random() < .6 ? '#b9c2ff' : '#ffd27a', kind: 'star' }),
+      draw(c, t, wa, dead) {
+        haloS(c, 'rgba(127,140,255,.45)', 38);
+        c.lineJoin = 'round';
+        glowS(c, '#7f8cff', 18); c.fillStyle = '#0d0f2e'; c.lineWidth = 2.5;
+        c.beginPath(); c.moveTo(-2, -R + 1); c.lineTo(-4, -R - 9); c.lineTo(3, -R); c.closePath(); c.fill(); c.stroke();
+        c.beginPath(); c.moveTo(8, -R + 1); c.lineTo(12, -R - 8); c.lineTo(14, -R + 3); c.closePath(); c.fill(); c.stroke();
+        c.beginPath(); c.ellipse(0, 1, R + 2, R + 1, 0, 0, TAU); c.fill(); c.stroke();
+        c.globalAlpha = .45; c.lineWidth = 1.2;
+        for (let i = 0; i < 3; i++) { const y = 6 + i * 4; c.beginPath(); c.moveTo(-5, y); c.lineTo(-2, y + 2); c.lineTo(1, y); c.stroke(); }
+        c.globalAlpha = 1;
+        glowS(c, '#b9c2ff', 14); c.fillStyle = 'rgba(127,140,255,.22)'; c.lineWidth = 2;
+        c.beginPath(); c.moveTo(-6, 0); c.quadraticCurveTo(-20, -4 - 12 * wa, -18, 6 - 6 * wa); c.quadraticCurveTo(-12, 9, -4, 6); c.closePath(); c.fill(); c.stroke();
+        glowS(c, '#ffb43b', 14); c.fillStyle = '#1a1405'; c.lineWidth = 2;
+        for (const ex of [3, 12]) { c.beginPath(); c.arc(ex, -3, 5, 0, TAU); c.fill(); c.stroke(); }
+        const blink = dead ? 0.15 : Math.sin(t * 1.3) > 0.97 ? 0.25 : 1;
+        c.shadowBlur = 10; c.fillStyle = '#ffd27a';
+        for (const ex of [3, 12]) { c.beginPath(); c.ellipse(ex + 1, -3, 2.3, 2.3 * blink, 0, 0, TAU); c.fill(); }
+        c.shadowBlur = 0; c.fillStyle = '#ffb43b';
+        c.beginPath(); c.moveTo(6, 2); c.lineTo(8.5, 7); c.lineTo(10, 2); c.closePath(); c.fill();
+      } },
+    { id: 'jelly', name: 'Jellyfish', price: 600, c: '#ff5cc8', desc: 'Manet med en klocka som pulserar när den flaxar och tentakler som viftar bakom. Bubblor i spåret.',
+      trail: () => ({ col: Math.random() < .6 ? '#ff9ae0' : '#7ffcff', kind: 'bubble' }),
+      draw(c, t, wa, dead) {
+        haloS(c, 'rgba(255,92,200,.45)', 40);
+        glowS(c, '#ff9ae0', 10); c.lineWidth = 1.8; c.lineCap = 'round';
+        for (let i = 0; i < 5; i++) {
+          const x0 = -9 + i * 4.5; c.beginPath(); c.moveTo(x0, 5);
+          for (let k = 1; k <= 6; k++) c.lineTo(x0 - k * 3.2 + Math.sin(t * 6 + i + k * .8) * 2.2, 5 + k * 4);
+          c.stroke();
+        }
+        c.save(); c.scale(1.04 - .06 * wa, .96 + .1 * wa);
+        glowS(c, '#ff5cc8', 18); c.fillStyle = '#2a0726'; c.lineWidth = 2.5; c.lineJoin = 'round';
+        c.beginPath(); c.moveTo(-R - 2, 4); c.quadraticCurveTo(-R - 2, -R - 4, 1, -R - 3); c.quadraticCurveTo(R + 4, -R - 3, R + 3, 4);
+        for (let x = R + 3; x > -R - 2; x -= 6) c.quadraticCurveTo(x - 3, 9, x - 6, 4);
+        c.closePath(); c.fill(); c.stroke();
+        c.globalAlpha = .65; glowS(c, '#7ffcff', 8); c.fillStyle = '#7ffcff';
+        for (const [x, y, r] of [[-6, -6, 1.6], [1, -10, 1.2], [8, -6, 1.4], [-2, -2, 1]]) { c.beginPath(); c.arc(x, y, r, 0, TAU); c.fill(); }
+        c.globalAlpha = 1;
+        eyeS(c, 4, -2, 2.6, dead ? '#ff5cc8' : '#2a0726'); eyeS(c, 11, -2, 2.6, dead ? '#ff5cc8' : '#2a0726');
+        c.restore();
+      } },
+    { id: 'ufo', name: 'UFO', price: 850, c: '#b6ff3b', desc: 'Flygande tefat med glaskupol och en liten alien inuti. Lamporna blinkar och en dragstråle lyser när den flaxar.',
+      trail: () => ({ col: Math.random() < .6 ? '#b6ff3b' : '#21f3ff', kind: 'dot' }),
+      draw(c, t, wa, dead) {
+        haloS(c, 'rgba(182,255,59,.4)', 40);
+        const beam = Math.max(0, wa);
+        if (beam > .05) {
+          c.save(); c.globalAlpha = .28 * beam;
+          const g = c.createLinearGradient(0, 4, 0, 32); g.addColorStop(0, 'rgba(182,255,59,.9)'); g.addColorStop(1, 'rgba(182,255,59,0)');
+          c.fillStyle = g; c.beginPath(); c.moveTo(-6, 5); c.lineTo(6, 5); c.lineTo(15, 32); c.lineTo(-15, 32); c.closePath(); c.fill(); c.restore();
+        }
+        glowS(c, '#21f3ff', 14); c.fillStyle = 'rgba(33,243,255,.12)'; c.lineWidth = 2;
+        c.beginPath(); c.arc(0, -1, 9, Math.PI, 0); c.closePath(); c.fill(); c.stroke();
+        c.shadowBlur = 8; c.shadowColor = '#b6ff3b'; c.fillStyle = '#1b3a07'; c.strokeStyle = '#b6ff3b'; c.lineWidth = 1.4;
+        c.beginPath(); c.ellipse(1, -4, 4, 3.6, 0, 0, TAU); c.fill(); c.stroke();
+        c.beginPath(); c.moveTo(0, -7); c.lineTo(-2, -11); c.moveTo(2, -7); c.lineTo(4, -11); c.stroke();
+        c.shadowBlur = 0; c.fillStyle = dead ? '#ff2bd6' : '#000';
+        c.beginPath(); c.ellipse(-.3, -4.4, 1, 1.5, -.3, 0, TAU); c.fill();
+        c.beginPath(); c.ellipse(2.6, -4.4, 1, 1.5, .3, 0, TAU); c.fill();
+        glowS(c, '#b6ff3b', 18); c.fillStyle = '#0d1a04'; c.lineWidth = 2.5;
+        c.beginPath(); c.ellipse(0, 2, R + 9, 6, 0, 0, TAU); c.fill(); c.stroke();
+        for (let i = 0; i < 5; i++) {
+          const on = Math.floor(t * 6 + i) % 2 === 0;
+          c.fillStyle = on ? '#ffd23b' : '#ff2bd6'; c.shadowColor = c.fillStyle; c.shadowBlur = 10;
+          c.beginPath(); c.arc(-14 + i * 7, 3, 1.6, 0, TAU); c.fill();
+        }
+        c.shadowBlur = 0;
+      } },
+    { id: 'dragon', name: 'Neon Dragon', price: 1500, c: '#a64dff', desc: 'Liten drake med horn, fladdermusvinge, ryggtaggar och pilsvans. Puffar rök ur näsan ibland. Gnistor i spåret.',
+      trail: () => ({ col: Math.random() < .5 ? '#a64dff' : '#20ffd7', kind: 'spark' }),
+      draw(c, t, wa, dead) {
+        haloS(c, 'rgba(166,77,255,.45)', 42);
+        c.lineJoin = 'round'; c.lineCap = 'round';
+        const tw = Math.sin(t * 5) * 4;
+        glowS(c, '#a64dff', 14); c.lineWidth = 2.5;
+        c.beginPath(); c.moveTo(-R + 2, 2); c.quadraticCurveTo(-R - 10, 6 + tw, -R - 20, tw * .6); c.stroke();
+        glowS(c, '#20ffd7', 12); c.fillStyle = 'rgba(32,255,215,.3)'; c.lineWidth = 1.6;
+        c.beginPath(); c.moveTo(-R - 20, tw * .6); c.lineTo(-R - 26, -4 + tw * .6); c.lineTo(-R - 27, 4 + tw * .6); c.closePath(); c.fill(); c.stroke();
+        const wy = -4 - 16 * wa;
+        glowS(c, '#20ffd7', 14); c.fillStyle = 'rgba(32,255,215,.16)'; c.lineWidth = 1.8;
+        c.beginPath(); c.moveTo(-4, -4); c.lineTo(-10, wy - 6); c.lineTo(-14, wy + 2); c.lineTo(-20, wy + 4); c.lineTo(-16, -2); c.closePath(); c.fill(); c.stroke();
+        glowS(c, '#a64dff', 18); c.fillStyle = '#1a0730'; c.lineWidth = 2.4;
+        c.beginPath(); c.moveTo(R + 6, -6);
+        c.quadraticCurveTo(R + 12, -4, R + 12, -1); c.lineTo(R + 4, 1);
+        c.quadraticCurveTo(R, 6, 6, R - 2); c.quadraticCurveTo(-8, R + 1, -R + 1, 5); c.quadraticCurveTo(-R - 2, -2, -6, -R + 3);
+        c.quadraticCurveTo(2, -R - 2, 8, -R + 2); c.quadraticCurveTo(R + 2, -10, R + 6, -6); c.closePath(); c.fill(); c.stroke();
+        c.lineWidth = 1.6; c.beginPath();
+        for (const [x, y] of [[-8, -R + 3], [-3, -R + 1], [2, -R + 1]]) { c.moveTo(x - 2, y + 2); c.lineTo(x, y - 5); c.lineTo(x + 2, y + 2); }
+        c.stroke();
+        glowS(c, '#20ffd7', 12); c.lineWidth = 2;
+        c.beginPath(); c.moveTo(8, -R + 2); c.quadraticCurveTo(6, -R - 6, 1, -R - 8); c.moveTo(12, -R + 3); c.quadraticCurveTo(13, -R - 5, 9, -R - 9); c.stroke();
+        const ny = -6 - 20 * wa;   // big near wing (bat wing with three fingers)
+        glowS(c, '#20ffd7', 16); c.fillStyle = 'rgba(32,255,215,.2)'; c.lineWidth = 2;
+        c.beginPath(); c.moveTo(2, -2);
+        c.lineTo(-6, ny - 10); c.quadraticCurveTo(-9, ny - 2, -12, ny - 4);
+        c.lineTo(-18, ny + 4); c.quadraticCurveTo(-18, ny + 9, -24, ny + 10);
+        c.quadraticCurveTo(-14, 2, -6, 4); c.closePath(); c.fill(); c.stroke();
+        c.lineWidth = 1.2; c.globalAlpha = .7;
+        c.beginPath(); c.moveTo(2, -2); c.lineTo(-12, ny - 4); c.moveTo(2, -2); c.lineTo(-18, ny + 4); c.stroke();
+        c.globalAlpha = 1;
+        c.shadowBlur = 12; c.fillStyle = dead ? '#ff2bd6' : '#20ffd7'; c.shadowColor = c.fillStyle;
+        c.beginPath(); c.ellipse(13, -6, 2.6, 1.6, -.3, 0, TAU); c.fill();
+        c.shadowBlur = 0; c.fillStyle = '#05010a'; c.beginPath(); c.ellipse(13.6, -6, .8, 1.4, 0, 0, TAU); c.fill();
+        if (!dead && Math.sin(t * 2.2) > .6) { c.globalAlpha = .5; c.fillStyle = '#c79bff'; c.beginPath(); c.arc(R + 15 + Math.sin(t * 9), -4, 2.2, 0, TAU); c.fill(); c.globalAlpha = 1; }
       } }
   ];
+  SKINS.sort((a, b) => a.price - b.price);   // shop order: cheapest first
   const skinById = id => SKINS.find(s => s.id === id) || SKINS[0];
 
   // particle factory for a skin's trail (no gravity except the classic dot/spark)
